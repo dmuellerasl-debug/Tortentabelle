@@ -484,6 +484,37 @@
       cursor: pointer;
     }
 
+    .confirm-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1300;
+      background: rgba(22, 12, 12, 0.55);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .confirm-card {
+      width: min(460px, 100%);
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(124, 46, 46, 0.2);
+      box-shadow: var(--shadow-soft);
+      padding: 1rem;
+    }
+
+    .confirm-title {
+      margin: 0 0 0.3rem;
+      color: var(--cake-berry);
+      font-family: "Fraunces", serif;
+      font-size: 1.15rem;
+    }
+
+    .confirm-text {
+      margin: 0;
+      color: rgba(44, 26, 26, 0.82);
+    }
+
     @media (min-width: 768px) {
       .overlay-grid {
         grid-template-columns: 1fr 1fr;
@@ -712,6 +743,18 @@
         <img id="bildDetailImage" src="" alt="Bild Detailansicht" />
       </div>
     </div>
+
+    <div id="confirmCloseOverlay" class="confirm-layer d-none" onclick="confirmCloseOverlayClick(event)">
+      <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmCloseTitle">
+        <h4 id="confirmCloseTitle" class="confirm-title">Ungespeicherte Änderungen</h4>
+        <p class="confirm-text">Möchtest du speichern, schließen ohne Speichern oder abbrechen?</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="btn-cake btn-cake-primary" onclick="confirmCloseAction('save')">Speichern</button>
+          <button type="button" class="btn-cake btn-cake-soft" onclick="confirmCloseAction('close')">Schließen</button>
+          <button type="button" class="btn-cake btn-cake-soft" onclick="confirmCloseAction('cancel')">Abbrechen</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script type="module">
@@ -727,16 +770,19 @@
     let geloeschteBildIndizes = new Set();
     let neueBildDateien = [];
     let previewObjectUrls = [];
+    let formularSnapshot = null;
 
     const loginBox = document.getElementById("loginBox");
     const app = document.getElementById("app");
     const formularOverlay = document.getElementById("formularOverlay");
     const bildDetailOverlay = document.getElementById("bildDetailOverlay");
     const bildDetailImage = document.getElementById("bildDetailImage");
+    const confirmCloseOverlay = document.getElementById("confirmCloseOverlay");
     const overlayPanel = document.querySelector("#formularOverlay .overlay-panel");
     const editModeToggle = document.getElementById("editModeToggle");
     const closeButton = document.getElementById("closeButton");
     const tortenSuche = document.getElementById("tortenSuche");
+    let confirmCloseResolver = null;
 
     async function start() {
       const { data } = await supabase.auth.getSession();
@@ -884,6 +930,65 @@
       previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
       previewObjectUrls = [];
     }
+
+    function serializeCurrentFormState() {
+      const sortText = (a, b) => String(a).localeCompare(String(b), "de-DE");
+      return {
+        name: document.getElementById("name").value,
+        fuerWen: document.getElementById("fuerWen").value,
+        dueTo: document.getElementById("dueTo").value,
+        price: document.getElementById("price").value,
+        statusSelect: document.getElementById("statusSelect").value,
+        notiz: document.getElementById("notiz").value,
+        boden: getCheckedValues("boden").slice().sort(sortText),
+        bodenWunschText: document.getElementById("bodenWunschText").value,
+        fuellung: getCheckedValues("fuellung").slice().sort(sortText),
+        frischeErdbeeren: document.getElementById("frischeErdbeeren").checked,
+        fruchtWunschText: document.getElementById("fruchtWunschText").value,
+        groesseTyp: document.getElementById("groesseTyp").value,
+        groesseStandard: document.getElementById("groesseStandard").value,
+        groesseIndividuell: document.getElementById("groesseIndividuell").value,
+        ganache: getCheckedValues("ganache").slice().sort(sortText),
+        ganacheWunschText: document.getElementById("ganacheWunschText").value,
+        fondantFarbeText: document.getElementById("fondantFarbeText").value,
+        lactosefrei: document.getElementById("lactosefrei").checked,
+        bestehendeBilder: bestehendeBilder.slice(),
+        geloeschteBildIndizes: Array.from(geloeschteBildIndizes).sort((a, b) => a - b),
+        neueBildDateien: neueBildDateien
+          .map((file) => ({ name: file.name, size: file.size, lastModified: file.lastModified, type: file.type }))
+          .sort((a, b) => `${a.name}|${a.size}|${a.lastModified}`.localeCompare(`${b.name}|${b.size}|${b.lastModified}`, "de-DE"))
+      };
+    }
+
+    function merkeFormularSnapshot() {
+      formularSnapshot = JSON.stringify(serializeCurrentFormState());
+    }
+
+    function hatUngeleseneAenderungen() {
+      if (!formularSnapshot) return false;
+      return JSON.stringify(serializeCurrentFormState()) !== formularSnapshot;
+    }
+
+    function frageSchliessenAktion() {
+      return new Promise((resolve) => {
+        confirmCloseResolver = resolve;
+        confirmCloseOverlay.classList.remove("d-none");
+      });
+    }
+
+    window.confirmCloseAction = function (aktion) {
+      if (!confirmCloseResolver) return;
+      const resolver = confirmCloseResolver;
+      confirmCloseResolver = null;
+      confirmCloseOverlay.classList.add("d-none");
+      resolver(aktion);
+    };
+
+    window.confirmCloseOverlayClick = function (event) {
+      if (event.target === confirmCloseOverlay) {
+        confirmCloseAction("cancel");
+      }
+    };
 
     function detectImageMime(bytes) {
       if (bytes.length >= 4 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
@@ -1176,12 +1281,13 @@
       document.getElementById("notiz").value = "";
       clearFormSelection();
       setEditMode(true);
+      merkeFormularSnapshot();
       openOverlay();
     };
 
     window.speichern = async function () {
       if (!isEditMode()) {
-        return;
+        return false;
       }
 
       const name = document.getElementById("name").value.trim();
@@ -1252,9 +1358,11 @@
 
       if (error) {
         alert(error.message);
+        return false;
       } else {
-        formularSchliessen();
+        await formularSchliessen(true);
         ladeTorten();
+        return true;
       }
     };
 
@@ -1266,13 +1374,27 @@
       document.getElementById("formularTitel").innerText = "Torte bearbeiten";
       fillFormFromRow(row);
       setEditMode(false);
+      merkeFormularSnapshot();
       openOverlay();
     };
 
-    window.formularSchliessen = function () {
+    window.formularSchliessen = async function (forceClose = false) {
+      if (!forceClose && hatUngeleseneAenderungen()) {
+        const aktion = await frageSchliessenAktion();
+        if (aktion === "save") {
+          await speichern();
+          return;
+        }
+
+        if (aktion === "cancel") {
+          return;
+        }
+      }
+
       formularOverlay.classList.add("d-none");
       bildDetailSchliessen();
       clearPreviewObjectUrls();
+      formularSnapshot = null;
     };
 
     window.zeigeBildDetail = function (src) {
@@ -1315,6 +1437,11 @@
     };
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !confirmCloseOverlay.classList.contains("d-none")) {
+        confirmCloseAction("cancel");
+        return;
+      }
+
       if (event.key === "Escape" && !bildDetailOverlay.classList.contains("d-none")) {
         bildDetailSchliessen();
         return;
