@@ -645,6 +645,17 @@
             <div id="bildPreview" class="bild-preview-grid"></div>
           </div>
 
+          <div>
+            <label class="form-label fw-semibold" for="stockwerkAnzahl">🏢 Anzahl Stockwerke</label>
+            <select id="stockwerkAnzahl" class="form-control">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
           <div class="overlay-grid">
             <fieldset class="form-box">
               <legend>🍰 Boden</legend>
@@ -722,6 +733,8 @@
             </fieldset>
           </div>
 
+          <div id="weitereStockwerkeContainer" class="d-grid gap-3"></div>
+
           <div class="form-box d-flex flex-wrap justify-content-between align-items-center gap-2">
             <label class="option-toggle d-flex align-items-center gap-2 fw-semibold m-0">
               <input id="lactosefrei" type="checkbox" />
@@ -729,9 +742,10 @@
             </label>
           </div>
 
-          <div class="d-flex flex-wrap gap-2">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
             <button id="saveButton" class="btn-cake btn-cake-primary" onclick="speichern()">Speichern</button>
             <button id="closeButton" class="btn-cake btn-cake-soft" onclick="formularSchliessen()">Schließen</button>
+            <button id="deleteButton" class="btn-cake btn-cake-soft ms-auto" onclick="loeschenTorte()">Löschen</button>
           </div>
         </div>
       </div>
@@ -752,6 +766,17 @@
           <button type="button" class="btn-cake btn-cake-primary" onclick="confirmCloseAction('save')">Speichern</button>
           <button type="button" class="btn-cake btn-cake-soft" onclick="confirmCloseAction('close')">Schließen</button>
           <button type="button" class="btn-cake btn-cake-soft" onclick="confirmCloseAction('cancel')">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmDeleteOverlay" class="confirm-layer d-none" onclick="confirmDeleteOverlayClick(event)">
+      <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteTitle">
+        <h4 id="confirmDeleteTitle" class="confirm-title">Torte löschen</h4>
+        <p class="confirm-text">Möchtest du diese Torte wirklich löschen?</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="btn-cake btn-cake-primary" onclick="confirmDeleteAction('delete')">Löschen</button>
+          <button type="button" class="btn-cake btn-cake-soft" onclick="confirmDeleteAction('cancel')">Abbrechen</button>
         </div>
       </div>
     </div>
@@ -778,11 +803,16 @@
     const bildDetailOverlay = document.getElementById("bildDetailOverlay");
     const bildDetailImage = document.getElementById("bildDetailImage");
     const confirmCloseOverlay = document.getElementById("confirmCloseOverlay");
+    const confirmDeleteOverlay = document.getElementById("confirmDeleteOverlay");
     const overlayPanel = document.querySelector("#formularOverlay .overlay-panel");
     const editModeToggle = document.getElementById("editModeToggle");
     const closeButton = document.getElementById("closeButton");
+    const deleteButton = document.getElementById("deleteButton");
     const tortenSuche = document.getElementById("tortenSuche");
+    const stockwerkAnzahl = document.getElementById("stockwerkAnzahl");
+    const weitereStockwerkeContainer = document.getElementById("weitereStockwerkeContainer");
     let confirmCloseResolver = null;
+    let confirmDeleteResolver = null;
 
     async function start() {
       const { data } = await supabase.auth.getSession();
@@ -822,6 +852,7 @@
       const { data, error } = await supabase
         .from("Torten")
         .select("*")
+        .is("zu_tortenID", null)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -931,8 +962,198 @@
       previewObjectUrls = [];
     }
 
+    function getStockwerkAnzahl() {
+      const parsed = Number(stockwerkAnzahl.value || "1");
+      return Math.min(5, Math.max(1, Number.isFinite(parsed) ? parsed : 1));
+    }
+
+    function getTierRefs(stockwerk) {
+      if (stockwerk === 1) {
+        return {
+          nameBoden: "boden",
+          nameFuellung: "fuellung",
+          nameGanache: "ganache",
+          idBodenWunsch: "bodenWunschText",
+          idFrischeErdbeeren: "frischeErdbeeren",
+          idFruchtWunsch: "fruchtWunschText",
+          idGanacheWunsch: "ganacheWunschText",
+          idGroesseTyp: "groesseTyp",
+          idGroesseStandard: "groesseStandard",
+          idGroesseIndividuell: "groesseIndividuell",
+          idFondant: "fondantFarbeText"
+        };
+      }
+
+      const suffix = `s${stockwerk}`;
+      return {
+        nameBoden: `boden_${suffix}`,
+        nameFuellung: `fuellung_${suffix}`,
+        nameGanache: `ganache_${suffix}`,
+        idBodenWunsch: `${suffix}_bodenWunschText`,
+        idFrischeErdbeeren: `${suffix}_frischeErdbeeren`,
+        idFruchtWunsch: `${suffix}_fruchtWunschText`,
+        idGanacheWunsch: `${suffix}_ganacheWunschText`,
+        idGroesseTyp: `${suffix}_groesseTyp`,
+        idGroesseStandard: `${suffix}_groesseStandard`,
+        idGroesseIndividuell: `${suffix}_groesseIndividuell`,
+        idFondant: `${suffix}_fondantFarbeText`
+      };
+    }
+
+    function buildStockwerkBlock(stockwerk) {
+      const refs = getTierRefs(stockwerk);
+      return `
+        <div class="form-box">
+          <h4 class="overlay-headline mb-2" style="font-size:1.1rem;">Stockwerk ${stockwerk}</h4>
+          <div class="overlay-grid">
+            <fieldset class="form-box">
+              <legend>🍰 Boden (${stockwerk})</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameBoden}" value="Vanille" /> 🍦 Vanille</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameBoden}" value="Schokolade" /> 🍫 Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameBoden}" value="Nuss-Orange" /> 🌰 Nuss-Orange</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameBoden}" value="Löffelbiskuit" /> 🍪 Löffelbiskuit</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameBoden}" value="Standard Biskuit" /> 🧁 Standard Biskuit</label>
+                <div class="dependent-field-flat">
+                  <input id="${refs.idBodenWunsch}" class="form-control" placeholder="Boden nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🍓 Füllung (${stockwerk})</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Beerenfüllung" /> 🍊 Beeren</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Frischkäsecreme" /> 🥛 Frischkäsecreme</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Karamellcreme" /> 🍯 Karamellcreme</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Buttercreme" /> 🧈 Buttercreme</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Schokoladensahne" /> 🍫 Schokoladensahne</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Erdbeersahne" /> 🍓 Erdbeersahne</label>
+                <label class="dependent-field option-toggle"><input id="${refs.idFrischeErdbeeren}" type="checkbox" /> 🍓 Frische Erdbeeren</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Vanillesahne/leichte Buttercreme" /> 🍦 Vanillesahne/leichte Buttercreme</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Snickersfüllung" /> 🥜 Snickers</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Yogurette" /> 🍫 Yogurette</label>
+                <div class="dependent-field-flat">
+                  <input id="${refs.idFruchtWunsch}" class="form-control" placeholder="Fruchtfüllung nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>📏 Größe (${stockwerk})</legend>
+              <div class="check-list">
+                <div>
+                  <label class="form-label fw-semibold mb-1" for="${refs.idGroesseTyp}">Typ</label>
+                  <select id="${refs.idGroesseTyp}" class="form-control">
+                    <option value="">Bitte Typ wählen</option>
+                    <option value="Rechteck/Viereck">Rechteck/Viereck</option>
+                    <option value="Rund">Rund</option>
+                    <option value="Individuell">Individuell</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label fw-semibold mb-1" for="${refs.idGroesseStandard}">Standardmaße</label>
+                  <select id="${refs.idGroesseStandard}" class="form-control">
+                    <option value="">Bitte zuerst Typ wählen</option>
+                  </select>
+                </div>
+              </div>
+              <div class="pt-2">
+                <input id="${refs.idGroesseIndividuell}" class="form-control" placeholder="Eigene Größe" />
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🍫 Ganache (${stockwerk})</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameGanache}" value="Weiße Schokolade" /> 🤍 Weiße Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameGanache}" value="Vollmilch Schokolade" /> 🟤 Vollmilch Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="${refs.nameGanache}" value="Zartbitter Schokolade" /> ⚫ Zartbitter Schokolade</label>
+                <div class="dependent-field-flat">
+                  <input id="${refs.idGanacheWunsch}" class="form-control" placeholder="Ganache nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🎨 Fondant Farbe (${stockwerk})</legend>
+              <label class="form-label fw-semibold mb-2" for="${refs.idFondant}">Farben (eine pro Zeile)</label>
+              <textarea id="${refs.idFondant}" class="form-control" rows="5" placeholder=""></textarea>
+            </fieldset>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWeitereStockwerke() {
+      const anzahl = getStockwerkAnzahl();
+      if (anzahl <= 1) {
+        weitereStockwerkeContainer.innerHTML = "";
+        return;
+      }
+
+      let html = "";
+      for (let stockwerk = 2; stockwerk <= anzahl; stockwerk += 1) {
+        html += buildStockwerkBlock(stockwerk);
+      }
+      weitereStockwerkeContainer.innerHTML = html;
+
+      for (let stockwerk = 2; stockwerk <= anzahl; stockwerk += 1) {
+        const refs = getTierRefs(stockwerk);
+        document.querySelector(`input[name="${refs.nameFuellung}"][value="Erdbeersahne"]`)?.addEventListener("change", () => toggleErdbeerOption(stockwerk));
+        document.getElementById(refs.idGroesseTyp)?.addEventListener("change", () => renderGroessenNachTyp(stockwerk));
+        renderGroessenNachTyp(stockwerk);
+        toggleErdbeerOption(stockwerk);
+      }
+    }
+
+    function collectTierData(stockwerk) {
+      const refs = getTierRefs(stockwerk);
+      const fuellungWerte = getCheckedValues(refs.nameFuellung);
+      const hatErdbeersahne = document.querySelector(`input[name="${refs.nameFuellung}"][value="Erdbeersahne"]`)?.checked;
+      const frischeErdbeeren = document.getElementById(refs.idFrischeErdbeeren)?.checked;
+      if (hatErdbeersahne && frischeErdbeeren) {
+        fuellungWerte.push("Frische Erdbeeren");
+      }
+
+      const fruchtWunsch = document.getElementById(refs.idFruchtWunsch)?.value.trim() ?? "";
+      if (fruchtWunsch) {
+        fuellungWerte.push(`Fruchtfüllung: ${fruchtWunsch}`);
+      }
+
+      const ganacheWerte = getCheckedValues(refs.nameGanache);
+      const ganacheWunsch = document.getElementById(refs.idGanacheWunsch)?.value.trim() ?? "";
+      if (ganacheWunsch) {
+        ganacheWerte.push(`Ganache nach Wunsch: ${ganacheWunsch}`);
+      }
+
+      const bodenWerte = getCheckedValues(refs.nameBoden);
+      const bodenWunsch = document.getElementById(refs.idBodenWunsch)?.value.trim() ?? "";
+      if (bodenWunsch) {
+        bodenWerte.push(`Boden nach Wunsch: ${bodenWunsch}`);
+      }
+
+      const groesseTyp = document.getElementById(refs.idGroesseTyp)?.value ?? "";
+      const groesseStandard = document.getElementById(refs.idGroesseStandard)?.value ?? "";
+      const groesseIndividuell = document.getElementById(refs.idGroesseIndividuell)?.value.trim() ?? "";
+
+      return {
+        boden: bodenWerte,
+        fuellung: fuellungWerte,
+        ganache: ganacheWerte,
+        fondant_farbe: parseTextareaList(document.getElementById(refs.idFondant)?.value ?? ""),
+        groesse_typ: groesseTyp || null,
+        groesse: groesseStandard || groesseIndividuell || null
+      };
+    }
+
     function serializeCurrentFormState() {
-      const sortText = (a, b) => String(a).localeCompare(String(b), "de-DE");
+      const stockwerkGesamt = getStockwerkAnzahl();
+      const stockwerke = [];
+      for (let stockwerk = 1; stockwerk <= stockwerkGesamt; stockwerk += 1) {
+        stockwerke.push(collectTierData(stockwerk));
+      }
+
       return {
         name: document.getElementById("name").value,
         fuerWen: document.getElementById("fuerWen").value,
@@ -940,17 +1161,8 @@
         price: document.getElementById("price").value,
         statusSelect: document.getElementById("statusSelect").value,
         notiz: document.getElementById("notiz").value,
-        boden: getCheckedValues("boden").slice().sort(sortText),
-        bodenWunschText: document.getElementById("bodenWunschText").value,
-        fuellung: getCheckedValues("fuellung").slice().sort(sortText),
-        frischeErdbeeren: document.getElementById("frischeErdbeeren").checked,
-        fruchtWunschText: document.getElementById("fruchtWunschText").value,
-        groesseTyp: document.getElementById("groesseTyp").value,
-        groesseStandard: document.getElementById("groesseStandard").value,
-        groesseIndividuell: document.getElementById("groesseIndividuell").value,
-        ganache: getCheckedValues("ganache").slice().sort(sortText),
-        ganacheWunschText: document.getElementById("ganacheWunschText").value,
-        fondantFarbeText: document.getElementById("fondantFarbeText").value,
+        stockwerkAnzahl: stockwerkGesamt,
+        stockwerke,
         lactosefrei: document.getElementById("lactosefrei").checked,
         bestehendeBilder: bestehendeBilder.slice(),
         geloeschteBildIndizes: Array.from(geloeschteBildIndizes).sort((a, b) => a - b),
@@ -987,6 +1199,27 @@
     window.confirmCloseOverlayClick = function (event) {
       if (event.target === confirmCloseOverlay) {
         confirmCloseAction("cancel");
+      }
+    };
+
+    function frageLoeschAktion() {
+      return new Promise((resolve) => {
+        confirmDeleteResolver = resolve;
+        confirmDeleteOverlay.classList.remove("d-none");
+      });
+    }
+
+    window.confirmDeleteAction = function (aktion) {
+      if (!confirmDeleteResolver) return;
+      const resolver = confirmDeleteResolver;
+      confirmDeleteResolver = null;
+      confirmDeleteOverlay.classList.add("d-none");
+      resolver(aktion);
+    };
+
+    window.confirmDeleteOverlayClick = function (event) {
+      if (event.target === confirmDeleteOverlay) {
+        confirmDeleteAction("cancel");
       }
     };
 
@@ -1055,15 +1288,25 @@
       return editModeToggle.checked;
     }
 
+    function syncDeleteButtonVisibility() {
+      if (!deleteButton) return;
+      deleteButton.classList.toggle("d-none", !aktuelleId);
+    }
+
     function syncEditModeControls() {
       const controls = document.querySelectorAll("#formularOverlay input, #formularOverlay select, #formularOverlay textarea, #formularOverlay button");
       controls.forEach((el) => {
-        if (el === editModeToggle || el === closeButton) return;
+        if (el === editModeToggle || el === closeButton || el === deleteButton) return;
         el.disabled = !isEditMode();
       });
 
-      toggleErdbeerOption();
-      renderGroessenNachTyp(document.getElementById("groesseStandard").value);
+      toggleErdbeerOption(1);
+      renderGroessenNachTyp(1, document.getElementById("groesseStandard").value);
+      for (let stockwerk = 2; stockwerk <= getStockwerkAnzahl(); stockwerk += 1) {
+        const refs = getTierRefs(stockwerk);
+        toggleErdbeerOption(stockwerk);
+        renderGroessenNachTyp(stockwerk, document.getElementById(refs.idGroesseStandard)?.value ?? "");
+      }
     }
 
     function setEditMode(enabled) {
@@ -1101,6 +1344,63 @@
       return value;
     }
 
+    function fillTierFromRow(stockwerk, row) {
+      const refs = getTierRefs(stockwerk);
+
+      const bodenWerte = normalizeArray(row?.boden).map(mapLegacyBoden);
+      const bodenBasis = bodenWerte.filter((entry) => !entry.startsWith("Boden nach Wunsch:"));
+      setCheckedValues(refs.nameBoden, bodenBasis);
+      const bodenExtra = bodenWerte.find((entry) => entry.startsWith("Boden nach Wunsch:"));
+      const bodenWunsch = document.getElementById(refs.idBodenWunsch);
+      if (bodenWunsch) {
+        bodenWunsch.value = bodenExtra ? bodenExtra.replace(/^Boden nach Wunsch:\s*/u, "") : "";
+      }
+
+      const fuellungen = normalizeArray(row?.fuellung).map(mapLegacyFuellung);
+      const fuellungBasis = fuellungen.filter((entry) => entry !== "Frische Erdbeeren" && !entry.startsWith("Fruchtfuellung:") && !entry.startsWith("Fruchtfüllung:"));
+      setCheckedValues(refs.nameFuellung, fuellungBasis);
+      const frischeErdbeeren = document.getElementById(refs.idFrischeErdbeeren);
+      if (frischeErdbeeren) {
+        frischeErdbeeren.checked = fuellungen.includes("Frische Erdbeeren");
+      }
+      const fruchtEintrag = fuellungen.find((entry) => entry.startsWith("Fruchtfuellung:") || entry.startsWith("Fruchtfüllung:"));
+      const fruchtWunsch = document.getElementById(refs.idFruchtWunsch);
+      if (fruchtWunsch) {
+        fruchtWunsch.value = fruchtEintrag
+          ? fruchtEintrag.replace(/^Fruchtfuellung:\s*/u, "").replace(/^Fruchtfüllung:\s*/u, "")
+          : "";
+      }
+
+      const ganacheWerte = normalizeArray(row?.ganache).map(mapLegacyGanache);
+      const ganacheBasis = ganacheWerte.filter((entry) => !entry.startsWith("Ganache nach Wunsch:"));
+      setCheckedValues(refs.nameGanache, ganacheBasis);
+      const ganacheExtra = ganacheWerte.find((entry) => entry.startsWith("Ganache nach Wunsch:"));
+      const ganacheWunsch = document.getElementById(refs.idGanacheWunsch);
+      if (ganacheWunsch) {
+        ganacheWunsch.value = ganacheExtra ? ganacheExtra.replace(/^Ganache nach Wunsch:\s*/u, "") : "";
+      }
+
+      const fondantWerte = normalizeArray(row?.fondant_farbe);
+      const fondant = document.getElementById(refs.idFondant);
+      if (fondant) {
+        fondant.value = fondantWerte.join("\n");
+      }
+
+      const typ = row?.groesse_typ ?? "";
+      const groesseTyp = document.getElementById(refs.idGroesseTyp);
+      if (groesseTyp) {
+        groesseTyp.value = typ;
+      }
+      renderGroessenNachTyp(stockwerk, row?.groesse ?? "");
+      const standardGroessen = new Set(Object.values(GROESSEN_NACH_TYP).flat());
+      const groesseIndividuell = document.getElementById(refs.idGroesseIndividuell);
+      if (groesseIndividuell) {
+        groesseIndividuell.value = row?.groesse && !standardGroessen.has(row.groesse) ? row.groesse : "";
+      }
+
+      toggleErdbeerOption(stockwerk);
+    }
+
     function getCheckedValues(groupName) {
       return Array.from(document.querySelectorAll(`input[name="${groupName}"]:checked`)).map((el) => el.value);
     }
@@ -1118,18 +1418,22 @@
       "Individuell": []
     };
 
-    function toggleErdbeerOption() {
-      const hatErdbeersahne = document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').checked;
-      const feld = document.getElementById("frischeErdbeeren");
+    function toggleErdbeerOption(stockwerk = 1) {
+      const refs = getTierRefs(stockwerk);
+      const hatErdbeersahne = document.querySelector(`input[name="${refs.nameFuellung}"][value="Erdbeersahne"]`)?.checked;
+      const feld = document.getElementById(refs.idFrischeErdbeeren);
+      if (!feld) return;
       feld.disabled = !hatErdbeersahne || !isEditMode();
       if (!hatErdbeersahne) {
         feld.checked = false;
       }
     }
 
-    function renderGroessenNachTyp(selectedValue = "") {
-      const typ = document.getElementById("groesseTyp").value;
-      const select = document.getElementById("groesseStandard");
+    function renderGroessenNachTyp(stockwerk = 1, selectedValue = "") {
+      const refs = getTierRefs(stockwerk);
+      const typ = document.getElementById(refs.idGroesseTyp)?.value ?? "";
+      const select = document.getElementById(refs.idGroesseStandard);
+      if (!select) return;
       const optionen = GROESSEN_NACH_TYP[typ] ?? [];
 
       select.innerHTML = `<option value="">${optionen.length ? "Bitte auswählen" : "Keine Standardmaße"}</option>`;
@@ -1169,6 +1473,8 @@
     }
 
     function clearFormSelection() {
+      stockwerkAnzahl.value = "1";
+      renderWeitereStockwerke();
       setCheckedValues("boden", []);
       setCheckedValues("fuellung", []);
       setCheckedValues("ganache", []);
@@ -1189,8 +1495,8 @@
       bestehendeBilder = [];
       geloeschteBildIndizes = new Set();
       neueBildDateien = [];
-      toggleErdbeerOption();
-      renderGroessenNachTyp();
+      toggleErdbeerOption(1);
+      renderGroessenNachTyp(1);
       renderBildPreview();
     }
 
@@ -1203,45 +1509,13 @@
       document.getElementById("dueTo").value = toDatetimeLocal(row.due_to);
       document.getElementById("lactosefrei").checked = Boolean(row.lactosefrei);
 
-      const bodenWerte = normalizeArray(row.boden).map(mapLegacyBoden);
-      const bodenBasis = bodenWerte.filter((entry) => !entry.startsWith("Boden nach Wunsch:"));
-      setCheckedValues("boden", bodenBasis);
-      const bodenExtra = bodenWerte.find((entry) => entry.startsWith("Boden nach Wunsch:"));
-      document.getElementById("bodenWunschText").value = bodenExtra
-        ? bodenExtra.replace(/^Boden nach Wunsch:\s*/u, "")
-        : "";
-
-      const fuellungen = normalizeArray(row.fuellung).map(mapLegacyFuellung);
-      const fuellungBasis = fuellungen.filter((entry) => entry !== "Frische Erdbeeren" && !entry.startsWith("Fruchtfuellung:") && !entry.startsWith("Fruchtfüllung:"));
-      setCheckedValues("fuellung", fuellungBasis);
-      document.getElementById("frischeErdbeeren").checked = fuellungen.includes("Frische Erdbeeren");
-      const fruchtEintrag = fuellungen.find((entry) => entry.startsWith("Fruchtfuellung:") || entry.startsWith("Fruchtfüllung:"));
-      document.getElementById("fruchtWunschText").value = fruchtEintrag
-        ? fruchtEintrag.replace(/^Fruchtfuellung:\s*/u, "").replace(/^Fruchtfüllung:\s*/u, "")
-        : "";
-
-      const ganacheWerte = normalizeArray(row.ganache).map(mapLegacyGanache);
-      const ganacheBasis = ganacheWerte.filter((entry) => !entry.startsWith("Ganache nach Wunsch:"));
-      setCheckedValues("ganache", ganacheBasis);
-      const ganacheExtra = ganacheWerte.find((entry) => entry.startsWith("Ganache nach Wunsch:"));
-      document.getElementById("ganacheWunschText").value = ganacheExtra
-        ? ganacheExtra.replace(/^Ganache nach Wunsch:\s*/u, "")
-        : "";
-
-      const fondantWerte = normalizeArray(row.fondant_farbe);
-      document.getElementById("fondantFarbeText").value = fondantWerte.join("\n");
-
-      const typ = row.groesse_typ ?? "";
-      document.getElementById("groesseTyp").value = typ;
-      renderGroessenNachTyp(row.groesse ?? "");
-      const standardGroessen = new Set(Object.values(GROESSEN_NACH_TYP).flat());
-      document.getElementById("groesseIndividuell").value = row.groesse && !standardGroessen.has(row.groesse) ? row.groesse : "";
+      fillTierFromRow(1, row);
 
       bestehendeBilder = normalizeArray(row.bild);
       geloeschteBildIndizes = new Set();
       neueBildDateien = [];
       document.getElementById("bildInput").value = "";
-      toggleErdbeerOption();
+      toggleErdbeerOption(1);
       renderBildPreview();
     }
 
@@ -1281,6 +1555,7 @@
       document.getElementById("notiz").value = "";
       clearFormSelection();
       setEditMode(true);
+      syncDeleteButtonVisibility();
       merkeFormularSnapshot();
       openOverlay();
     };
@@ -1296,36 +1571,14 @@
       const statusRaw = document.getElementById("statusSelect").value;
       const notiz = document.getElementById("notiz").value;
       const dueTo = document.getElementById("dueTo").value;
-      const groesseTyp = document.getElementById("groesseTyp").value;
-      const groesseStandard = document.getElementById("groesseStandard").value;
-      const groesseIndividuell = document.getElementById("groesseIndividuell").value.trim();
+      const stockwerkGesamt = getStockwerkAnzahl();
+      const stockwerk1 = collectTierData(1);
       const neueBilderHex = await Promise.all(neueBildDateien.map((file) => fileToByteaHex(file)));
       const verbleibendeBilder = bestehendeBilder.filter((_, index) => !geloeschteBildIndizes.has(index));
       const bildArray = [...verbleibendeBilder, ...neueBilderHex];
       const statusValue = statusRaw === "" ? null : statusRaw === "true";
 
-      const fuellungWerte = getCheckedValues("fuellung");
-      if (document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').checked && document.getElementById("frischeErdbeeren").checked) {
-        fuellungWerte.push("Frische Erdbeeren");
-      }
-      const fruchtWunsch = document.getElementById("fruchtWunschText").value.trim();
-      if (fruchtWunsch) {
-        fuellungWerte.push(`Fruchtfüllung: ${fruchtWunsch}`);
-      }
-
-      const ganacheWerte = getCheckedValues("ganache");
-      const ganacheWunsch = document.getElementById("ganacheWunschText").value.trim();
-      if (ganacheWunsch) {
-        ganacheWerte.push(`Ganache nach Wunsch: ${ganacheWunsch}`);
-      }
-
-      const bodenWerte = getCheckedValues("boden");
-      const bodenWunsch = document.getElementById("bodenWunschText").value.trim();
-      if (bodenWunsch) {
-        bodenWerte.push(`Boden nach Wunsch: ${bodenWunsch}`);
-      }
-
-      const payload = {
+      const rootPayload = {
         name,
         fuer_wen: fuerWen || null,
         price: price || null,
@@ -1333,49 +1586,172 @@
         notiz,
         due_to: dueTo || null,
         bild: bildArray,
-        boden: bodenWerte,
-        fuellung: fuellungWerte,
-        ganache: ganacheWerte,
-        fondant_farbe: parseTextareaList(document.getElementById("fondantFarbeText").value),
+        boden: stockwerk1.boden,
+        fuellung: stockwerk1.fuellung,
+        ganache: stockwerk1.ganache,
+        fondant_farbe: stockwerk1.fondant_farbe,
         lactosefrei: document.getElementById("lactosefrei").checked,
-        groesse_typ: groesseTyp || null,
-        groesse: groesseStandard || groesseIndividuell || null
+        groesse_typ: stockwerk1.groesse_typ,
+        groesse: stockwerk1.groesse,
+        stockwerk: 1,
+        zu_tortenID: null
       };
 
-      let error;
+      const buildChildRows = (rootId) => {
+        const rows = [];
+        for (let stockwerk = 2; stockwerk <= stockwerkGesamt; stockwerk += 1) {
+          const tier = collectTierData(stockwerk);
+          rows.push({
+            name,
+            fuer_wen: null,
+            price: null,
+            status: null,
+            notiz: null,
+            due_to: null,
+            bild: [],
+            boden: tier.boden,
+            fuellung: tier.fuellung,
+            ganache: tier.ganache,
+            fondant_farbe: tier.fondant_farbe,
+            lactosefrei: false,
+            groesse_typ: tier.groesse_typ,
+            groesse: tier.groesse,
+            stockwerk,
+            zu_tortenID: rootId
+          });
+        }
+        return rows;
+      };
 
       if (aktuelleId) {
-        const result = await supabase
+        const updateResult = await supabase
           .from("Torten")
-          .update(payload)
+          .update(rootPayload)
           .eq("id", aktuelleId);
 
-        error = result.error;
+        if (updateResult.error) {
+          alert(updateResult.error.message);
+          return false;
+        }
+
+        const deleteChildrenResult = await supabase
+          .from("Torten")
+          .delete()
+          .eq("zu_tortenID", aktuelleId);
+
+        if (deleteChildrenResult.error) {
+          alert(deleteChildrenResult.error.message);
+          return false;
+        }
+
+        const childRows = buildChildRows(aktuelleId);
+        if (childRows.length) {
+          const insertChildrenResult = await supabase.from("Torten").insert(childRows);
+          if (insertChildrenResult.error) {
+            alert(insertChildrenResult.error.message);
+            return false;
+          }
+        }
       } else {
-        const result = await supabase.from("Torten").insert(payload);
-        error = result.error;
+        const insertRootResult = await supabase
+          .from("Torten")
+          .insert(rootPayload)
+          .select("id")
+          .single();
+
+        if (insertRootResult.error) {
+          alert(insertRootResult.error.message);
+          return false;
+        }
+
+        const rootId = insertRootResult.data?.id;
+        const childRows = buildChildRows(rootId);
+        if (childRows.length) {
+          const insertChildrenResult = await supabase.from("Torten").insert(childRows);
+          if (insertChildrenResult.error) {
+            alert(insertChildrenResult.error.message);
+            return false;
+          }
+        }
       }
 
-      if (error) {
-        alert(error.message);
-        return false;
-      } else {
-        await formularSchliessen(true);
-        ladeTorten();
-        return true;
-      }
+      await formularSchliessen(true);
+      ladeTorten();
+      return true;
     };
 
-    window.bearbeitenById = function (id) {
+    window.bearbeitenById = async function (id) {
       const row = tortenDaten.find((eintrag) => String(eintrag.id) === String(id));
       if (!row) return;
+
+      const childResult = await supabase
+        .from("Torten")
+        .select("*")
+        .eq("zu_tortenID", row.id)
+        .order("stockwerk", { ascending: true });
+
+      if (childResult.error) {
+        alert(childResult.error.message);
+        return;
+      }
+
+      const stockwerkRows = [row, ...(childResult.data ?? [])];
+      const stockwerkMap = new Map();
+      stockwerkRows.forEach((entry) => {
+        const nr = Number(entry.stockwerk ?? (entry.id === row.id ? 1 : null));
+        if (Number.isFinite(nr) && nr >= 1) {
+          stockwerkMap.set(nr, entry);
+        }
+      });
+
+      const maxStockwerk = Math.max(1, ...Array.from(stockwerkMap.keys()));
+      stockwerkAnzahl.value = String(Math.min(5, maxStockwerk));
+      renderWeitereStockwerke();
 
       aktuelleId = row.id;
       document.getElementById("formularTitel").innerText = "Torte bearbeiten";
       fillFormFromRow(row);
+      for (let stockwerk = 2; stockwerk <= getStockwerkAnzahl(); stockwerk += 1) {
+        fillTierFromRow(stockwerk, stockwerkMap.get(stockwerk));
+      }
       setEditMode(false);
+      syncDeleteButtonVisibility();
       merkeFormularSnapshot();
       openOverlay();
+    };
+
+    window.loeschenTorte = async function () {
+      if (!aktuelleId) {
+        return;
+      }
+
+      const aktion = await frageLoeschAktion();
+      if (aktion !== "delete") {
+        return;
+      }
+
+      const deleteChildrenResult = await supabase
+        .from("Torten")
+        .delete()
+        .eq("zu_tortenID", aktuelleId);
+
+      if (deleteChildrenResult.error) {
+        alert(deleteChildrenResult.error.message);
+        return;
+      }
+
+      const deleteRootResult = await supabase
+        .from("Torten")
+        .delete()
+        .eq("id", aktuelleId);
+
+      if (deleteRootResult.error) {
+        alert(deleteRootResult.error.message);
+        return;
+      }
+
+      await formularSchliessen(true);
+      ladeTorten();
     };
 
     window.formularSchliessen = async function (forceClose = false) {
@@ -1437,6 +1813,11 @@
     };
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !confirmDeleteOverlay.classList.contains("d-none")) {
+        confirmDeleteAction("cancel");
+        return;
+      }
+
       if (event.key === "Escape" && !confirmCloseOverlay.classList.contains("d-none")) {
         confirmCloseAction("cancel");
         return;
@@ -1454,8 +1835,12 @@
 
     document.getElementById("notiz").addEventListener("input", autoResizeNotiz);
     editModeToggle.addEventListener("change", syncEditModeControls);
-    document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').addEventListener("change", toggleErdbeerOption);
-    document.getElementById("groesseTyp").addEventListener("change", () => renderGroessenNachTyp());
+    document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').addEventListener("change", () => toggleErdbeerOption(1));
+    document.getElementById("groesseTyp").addEventListener("change", () => renderGroessenNachTyp(1));
+    stockwerkAnzahl.addEventListener("change", () => {
+      renderWeitereStockwerke();
+      syncEditModeControls();
+    });
     tortenSuche.addEventListener("input", renderTortenListe);
     document.getElementById("bildInput").addEventListener("change", (event) => {
       if (!isEditMode()) {
@@ -1470,6 +1855,9 @@
       }
       event.target.value = "";
     });
+
+    renderWeitereStockwerke();
+    syncDeleteButtonVisibility();
   </script>
 </body>
 </html>
