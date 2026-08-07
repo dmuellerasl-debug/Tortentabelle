@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tortentabelle</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+}
+
+input, textarea {
+    width: 300px;
+    padding: 8px;
+    margin: 5px 0;
+}
+
+textarea {
+    height: 80px;
+}
+
+button {
+    padding: 8px 14px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+table {
+    border-collapse: collapse;
+    margin-top: 20px;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+#app {
+    display:none;
+}
+
+#formular {
+    display:none;
+    border:1px solid #ccc;
+    padding:15px;
+    margin-top:20px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="loginBox">
+
+<h2>Login</h2>
+
+<input id="email" placeholder="E-Mail">
+<br>
+
+<input id="password" type="password" placeholder="Passwort">
+<br>
+
+<button onclick="login()">
+Einloggen
+</button>
+
+</div>
+
+
+
+<div id="app">
+
+<h1>🍰 Tortentabelle</h1>
+
+
+<button onclick="neueTorte()">
++ Neue Torte
+</button>
+
+<button onclick="logout()">
+Logout
+</button>
+
+
+
+<div id="formular">
+
+<h2 id="formularTitel">
+Neue Torte
+</h2>
+
+
+<input id="name" placeholder="Name">
+<br>
+
+<textarea id="notiz" placeholder="Notiz"></textarea>
+<br>
+
+
+<button onclick="speichern()">
+Speichern
+</button>
+
+<button onclick="formularSchliessen()">
+Abbrechen
+</button>
+
+
+</div>
+
+
+
+<h2>Übersicht</h2>
+
+
+<table>
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Notiz</th>
+<th>Aktion</th>
+</tr>
+</thead>
+
+
+<tbody id="tortenListe">
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+<script type="module">
+
+
+import { createClient }
+from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+
+
+const supabaseUrl = 'https://cwojlvvavtneuhgicoia.supabase.co';
+const supabaseKey = 'sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c';
+
+
+
+const supabase =
+createClient(
+    supabaseUrl,
+    supabaseKey
+);
+
+
+
+let aktuelleId = null;
+
+
+
+// Beim Start prüfen
+
+async function start(){
+
+const {data} =
+await supabase.auth.getSession();
+
+
+if(data.session){
+
+    zeigeApp();
+
+}
+
+}
+
+
+start();
+
+
+
+
+// Login
+
+window.login = async function(){
+
+
+const email =
+document.getElementById("email").value;
+
+
+const password =
+document.getElementById("password").value;
+
+
+
+const {error} =
+await supabase.auth.signInWithPassword({
+
+email,
+password
+
+});
+
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+zeigeApp();
+
+
+}
+
+
+
+
+// App anzeigen
+
+function zeigeApp(){
+
+
+document.getElementById("loginBox")
+.style.display="none";
+
+
+document.getElementById("app")
+.style.display="block";
+
+
+ladeTorten();
+
+
+}
+
+
+
+
+// Logout
+
+window.logout = async function(){
+
+
+await supabase.auth.signOut();
+
+
+location.reload();
+
+
+}
+
+
+
+
+
+// Tabelle laden
+
+async function ladeTorten(){
+
+
+const {data,error} =
+
+await supabase
+
+.from("Torten")
+
+.select("*")
+
+.order("created_at", {ascending:false});
+
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+
+let html="";
+
+
+
+data.forEach(t=>{
+
+
+html += `
+
+<tr>
+
+<td>${t.name}</td>
+
+<td>${t.notiz ?? ""}</td>
+
+
+<td>
+
+<button onclick="bearbeiten('${t.id}',
+'${escapeQuotes(t.name)}',
+'${escapeQuotes(t.notiz ?? "")}')">
+
+Bearbeiten
+
+</button>
+
+
+</td>
+
+
+</tr>
+
+`;
+
+});
+
+
+
+document.getElementById("tortenListe")
+.innerHTML=html;
+
+
+}
+
+
+
+
+function escapeQuotes(text){
+
+return text
+.replaceAll("'","\\'");
+
+}
+
+
+
+
+
+// Neues Formular
+
+window.neueTorte=function(){
+
+
+aktuelleId=null;
+
+
+document.getElementById("formularTitel")
+.innerText="Neue Torte";
+
+
+document.getElementById("name").value="";
+document.getElementById("notiz").value="";
+
+
+document.getElementById("formular")
+.style.display="block";
+
+
+}
+
+
+
+
+// Speichern / Update
+
+window.speichern = async function(){
+
+
+const name =
+document.getElementById("name").value;
+
+
+const notiz =
+document.getElementById("notiz").value;
+
+
+
+let error;
+
+
+
+if(aktuelleId){
+
+
+// UPDATE
+
+const result =
+
+await supabase
+
+.from("Torten")
+
+.update({
+
+name,
+notiz
+
+})
+
+.eq("id", aktuelleId);
+
+
+error=result.error;
+
+
+}
+
+else{
+
+
+// INSERT
+
+const result =
+
+await supabase
+
+.from("Torten")
+
+.insert({
+
+name,
+notiz
+
+});
+
+
+error=result.error;
+
+
+}
+
+
+
+
+if(error){
+
+alert(error.message);
+
+}
+
+else{
+
+
+formularSchliessen();
+
+ladeTorten();
+
+
+}
+
+
+
+}
+
+
+
+
+// Bearbeiten
+
+window.bearbeiten=function(id,name,notiz){
+
+
+aktuelleId=id;
+
+
+document.getElementById("formularTitel")
+.innerText="Torte bearbeiten";
+
+
+document.getElementById("name").value=name;
+
+document.getElementById("notiz").value=notiz;
+
+
+
+document.getElementById("formular")
+.style.display="block";
+
+
+}
+
+
+
+
+window.formularSchliessen=function(){
+
+
+document.getElementById("formular")
+.style.display="none";
+
+
+}
+
+
+
+
+</script>
+
+
+</body>
+</html>
