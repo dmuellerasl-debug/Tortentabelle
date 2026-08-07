@@ -170,6 +170,21 @@
       cursor: pointer;
     }
 
+    .cake-status-pending {
+      border-color: rgba(193, 121, 34, 0.45);
+      background: linear-gradient(180deg, rgba(255, 245, 227, 0.95), rgba(255, 255, 255, 0.86));
+    }
+
+    .cake-status-done {
+      border-color: rgba(37, 138, 85, 0.45);
+      background: linear-gradient(180deg, rgba(230, 253, 240, 0.95), rgba(255, 255, 255, 0.86));
+    }
+
+    .cake-status-cancelled {
+      border-color: rgba(178, 70, 70, 0.5);
+      background: linear-gradient(180deg, rgba(255, 236, 236, 0.95), rgba(255, 255, 255, 0.86));
+    }
+
     .cake-item:hover {
       transform: translateY(-1px);
       box-shadow: 0 10px 22px rgba(124, 46, 46, 0.12);
@@ -184,20 +199,60 @@
       color: var(--cake-berry);
       font-family: "Fraunces", serif;
       font-weight: 700;
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.12rem;
       font-size: 1.1rem;
     }
 
-    .cake-item-note {
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: rgba(44, 26, 26, 0.9);
+    .cake-item-for {
+      font-size: 0.86rem;
+      color: rgba(44, 26, 26, 0.68);
       margin: 0;
     }
 
-    .cake-item-empty {
-      color: rgba(44, 26, 26, 0.6);
-      font-style: italic;
+    .cake-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .cake-status-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .cake-status-icon-done {
+      color: #198754;
+      background: rgba(25, 135, 84, 0.12);
+    }
+
+    .cake-status-icon-cancelled {
+      color: #b24f4f;
+      background: rgba(178, 79, 79, 0.14);
+    }
+
+    .cake-cover {
+      width: 100%;
+      height: 150px;
+      border-radius: 11px;
+      object-fit: contain;
+      display: block;
+      margin-bottom: 0.35rem;
+      border: 1px solid rgba(124, 46, 46, 0.14);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .cake-due {
+      margin: 0 0 0.65rem;
+      font-size: 0.8rem;
+      color: rgba(44, 26, 26, 0.65);
     }
 
     .overlay-layer {
@@ -215,6 +270,224 @@
     .overlay-panel {
       width: min(620px, 100%);
       margin: auto 0;
+    }
+
+    .overlay-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .form-box {
+      border: 1px solid rgba(124, 46, 46, 0.16);
+      border-radius: 14px;
+      padding: 0.8rem;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .form-box legend {
+      float: none;
+      width: auto;
+      margin: 0;
+      padding: 0 0.2rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--cake-berry);
+    }
+
+    .check-list {
+      display: grid;
+      gap: 0.32rem;
+      margin-top: 0.35rem;
+    }
+
+    .check-list label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.95rem;
+    }
+
+    .dependent-field {
+      margin-left: 1.7rem;
+      margin-top: 0.3rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .dependent-field-flat {
+      margin-left: 0;
+      margin-top: 0.3rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .dependent-field input {
+      font-size: 0.9rem;
+    }
+
+    .option-toggle {
+      position: relative;
+      border: 1px solid rgba(124, 46, 46, 0.22);
+      border-radius: 10px;
+      padding: 0.45rem 0.6rem;
+      background: rgba(255, 255, 255, 0.78);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .option-toggle:hover {
+      transform: translateY(-1px);
+      border-color: rgba(124, 46, 46, 0.4);
+    }
+
+    .option-toggle input[type="checkbox"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      border: 0;
+      padding: 0;
+      clip: rect(0 0 0 0);
+      overflow: hidden;
+    }
+
+    .option-toggle:has(input[type="checkbox"]:checked) {
+      background: rgba(124, 46, 46, 0.14);
+      border-color: rgba(124, 46, 46, 0.58);
+      font-weight: 700;
+    }
+
+    .option-toggle:has(input[type="checkbox"]:disabled) {
+      background: rgba(120, 120, 120, 0.12);
+      border-color: rgba(120, 120, 120, 0.38);
+      color: rgba(65, 65, 65, 0.72);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .option-toggle:has(input[type="checkbox"]:disabled:checked) {
+      background: rgba(124, 46, 46, 0.14);
+      border-color: rgba(124, 46, 46, 0.58);
+      color: var(--cake-berry);
+      font-weight: 700;
+    }
+
+    .overlay-headline {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      color: var(--cake-berry);
+      font-size: 1.45rem;
+    }
+
+    .edit-guard {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-weight: 700;
+      color: var(--cake-berry);
+      user-select: none;
+    }
+
+    .bild-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .bild-preview-item {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      border: 1px solid rgba(124, 46, 46, 0.2);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.8);
+      position: relative;
+    }
+
+    .bild-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .bild-remove {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(124, 46, 46, 0.85);
+      color: #fff;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .bild-badge {
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      background: rgba(44, 26, 26, 0.72);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .preview-clickable {
+      cursor: zoom-in;
+    }
+
+    .image-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(22, 12, 12, 0.82);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .image-lightbox-inner {
+      position: relative;
+      width: min(100%, 1000px);
+      max-height: 92vh;
+      display: grid;
+      place-items: center;
+    }
+
+    .image-lightbox img {
+      max-width: 100%;
+      max-height: 92vh;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.04);
+      object-fit: contain;
+    }
+
+    .image-lightbox-close {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #3a1d1d;
+      font-size: 1.2rem;
+      line-height: 1;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      .overlay-grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     #notiz {
@@ -280,6 +553,9 @@
           <div class="d-flex flex-wrap gap-2">
             <button class="btn-cake btn-cake-primary" onclick="neueTorte()">+ Neue Torte</button>
             <button class="btn-cake btn-cake-soft" onclick="logout()">Logout</button>
+            <div class="w-100 mt-1">
+              <input id="tortenSuche" class="form-control" placeholder="Suche: Tortenname oder Für wen" />
+            </div>
           </div>
         </div>
       </div>
@@ -295,21 +571,145 @@
 
     <div id="formularOverlay" class="overlay-layer d-none" onclick="overlayClick(event)">
       <div class="overlay-panel glass-card p-3 p-md-4 section-enter" role="dialog" aria-modal="true" aria-labelledby="formularTitel">
-        <h3 id="formularTitel" class="h4 mb-3" style="font-family: Fraunces, serif; color: var(--cake-berry);">Neue Torte</h3>
-        <div class="d-grid gap-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h3 id="formularTitel" class="overlay-headline">Neue Torte</h3>
+          <label class="edit-guard option-toggle" for="editModeToggle">
+            <input id="editModeToggle" type="checkbox" />
+            ✏️ Bearbeiten
+          </label>
+        </div>
+
+        <div class="d-grid gap-3 mb-3">
           <div>
-            <label class="form-label fw-semibold" for="name">Name</label>
+            <label class="form-label fw-semibold" for="name">🎂 Torte</label>
             <input id="name" class="form-control" placeholder="z. B. Himbeertraum" />
           </div>
           <div>
-            <label class="form-label fw-semibold" for="notiz">Notiz</label>
+            <label class="form-label fw-semibold" for="fuerWen">👤 Für wen</label>
+            <input id="fuerWen" class="form-control" placeholder="z. B. Geburtstag Anna" />
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="dueTo">📅 Bis (Datum/Uhrzeit)</label>
+            <input id="dueTo" type="datetime-local" class="form-control" />
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="price">💶 Preis</label>
+            <input id="price" class="form-control" placeholder="z. B. 79,00 EUR" />
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="statusSelect">🚦 Status</label>
+            <select id="statusSelect" class="form-control">
+              <option value="">In Bearbeitung</option>
+              <option value="true">Fertig</option>
+              <option value="false">Abgebrochen/Storniert</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="notiz">📝 Notiz</label>
             <textarea id="notiz" class="form-control" rows="4" placeholder="Wunschdeko, Allergene, Abholzeit ..."></textarea>
           </div>
+          <div>
+            <label class="form-label fw-semibold" for="bildInput">🖼️ Bilder</label>
+            <input id="bildInput" type="file" accept="image/*" multiple class="form-control" />
+            <div id="bildPreview" class="bild-preview-grid"></div>
+          </div>
+
+          <div class="overlay-grid">
+            <fieldset class="form-box">
+              <legend>🍰 Boden</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="boden" value="Vanille" /> 🍦 Vanille</label>
+                <label class="option-toggle"><input type="checkbox" name="boden" value="Schokolade" /> 🍫 Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="boden" value="Nuss-Orange" /> 🌰 Nuss-Orange</label>
+                <label class="option-toggle"><input type="checkbox" name="boden" value="Löffelbiskuit" /> 🍪 Löffelbiskuit</label>
+                <label class="option-toggle"><input type="checkbox" name="boden" value="Standard Biskuit" /> 🧁 Standard Biskuit</label>
+                <div class="dependent-field-flat">
+                  <input id="bodenWunschText" class="form-control" placeholder="Boden nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🍓 Füllung</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Beerenfüllung" /> 🍊 Beeren</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Frischkäsecreme" /> 🥛 Frischkäsecreme</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Karamellcreme" /> 🍯 Karamellcreme</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Buttercreme" /> 🧈 Buttercreme</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Schokoladensahne" /> 🍫 Schokoladensahne</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Erdbeersahne" /> 🍓 Erdbeersahne</label>
+                <label class="dependent-field option-toggle"><input id="frischeErdbeeren" type="checkbox" /> 🍓 Frische Erdbeeren</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Vanillesahne/leichte Buttercreme" /> 🍦 Vanillesahne/leichte Buttercreme</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Snickersfüllung" /> 🥜 Snickers</label>
+                <label class="option-toggle"><input type="checkbox" name="fuellung" value="Yogurette" /> 🍫 Yogurette</label>
+                <div class="dependent-field-flat">
+                  <input id="fruchtWunschText" class="form-control" placeholder="Fruchtfüllung nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>📏 Größe</legend>
+              <div class="check-list">
+                <div>
+                  <label class="form-label fw-semibold mb-1" for="groesseTyp">Typ</label>
+                  <select id="groesseTyp" class="form-control">
+                    <option value="">Bitte Typ wählen</option>
+                    <option value="Rechteck/Viereck">Rechteck/Viereck</option>
+                    <option value="Rund">Rund</option>
+                    <option value="Individuell">Individuell</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label fw-semibold mb-1" for="groesseStandard">Standardmaße</label>
+                  <select id="groesseStandard" class="form-control">
+                    <option value="">Bitte zuerst Typ wählen</option>
+                  </select>
+                </div>
+              </div>
+              <div class="pt-2">
+                <input id="groesseIndividuell" class="form-control" placeholder="Eigene Größe" />
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🍫 Ganache</legend>
+              <div class="check-list">
+                <label class="option-toggle"><input type="checkbox" name="ganache" value="Weiße Schokolade" /> 🤍 Weiße Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="ganache" value="Vollmilch Schokolade" /> 🟤 Vollmilch Schokolade</label>
+                <label class="option-toggle"><input type="checkbox" name="ganache" value="Zartbitter Schokolade" /> ⚫ Zartbitter Schokolade</label>
+                <div class="dependent-field-flat">
+                  <input id="ganacheWunschText" class="form-control" placeholder="Ganache nach Wunsch" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-box">
+              <legend>🎨 Fondant Farbe</legend>
+              <label class="form-label fw-semibold mb-2" for="fondantFarbeText">Farben (eine pro Zeile)</label>
+              <textarea id="fondantFarbeText" class="form-control" rows="5" placeholder=""></textarea>
+            </fieldset>
+          </div>
+
+          <div class="form-box d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <label class="option-toggle d-flex align-items-center gap-2 fw-semibold m-0">
+              <input id="lactosefrei" type="checkbox" />
+              🥛 Laktosefrei
+            </label>
+          </div>
+
           <div class="d-flex flex-wrap gap-2">
-            <button class="btn-cake btn-cake-primary" onclick="speichern()">Speichern</button>
-            <button class="btn-cake btn-cake-soft" onclick="formularSchliessen()">Schliessen</button>
+            <button id="saveButton" class="btn-cake btn-cake-primary" onclick="speichern()">Speichern</button>
+            <button id="closeButton" class="btn-cake btn-cake-soft" onclick="formularSchliessen()">Schließen</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="bildDetailOverlay" class="image-lightbox d-none" onclick="bildDetailClick(event)">
+      <div class="image-lightbox-inner">
+        <button type="button" class="image-lightbox-close" onclick="bildDetailSchliessen()" aria-label="Bild schließen">x</button>
+        <img id="bildDetailImage" src="" alt="Bild Detailansicht" />
       </div>
     </div>
   </main>
@@ -322,10 +722,21 @@
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     let aktuelleId = null;
+    let tortenDaten = [];
+    let bestehendeBilder = [];
+    let geloeschteBildIndizes = new Set();
+    let neueBildDateien = [];
+    let previewObjectUrls = [];
 
     const loginBox = document.getElementById("loginBox");
     const app = document.getElementById("app");
     const formularOverlay = document.getElementById("formularOverlay");
+    const bildDetailOverlay = document.getElementById("bildDetailOverlay");
+    const bildDetailImage = document.getElementById("bildDetailImage");
+    const overlayPanel = document.querySelector("#formularOverlay .overlay-panel");
+    const editModeToggle = document.getElementById("editModeToggle");
+    const closeButton = document.getElementById("closeButton");
+    const tortenSuche = document.getElementById("tortenSuche");
 
     async function start() {
       const { data } = await supabase.auth.getSession();
@@ -372,22 +783,64 @@
         return;
       }
 
+      tortenDaten = data ?? [];
+      renderTortenListe();
+    }
+
+    function normalizeSearchText(value) {
+      return String(value ?? "")
+        .toLocaleLowerCase("de-DE")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function renderTortenListe() {
+      const suchbegriff = normalizeSearchText(tortenSuche?.value ?? "").trim();
       let cardsHtml = "";
 
-      data.forEach((t) => {
+      const gefilterteTorten = tortenDaten.filter((t) => {
+        if (!suchbegriff) return true;
+        const zieltext = `${t.name ?? ""} ${t.fuer_wen ?? ""}`;
+        return normalizeSearchText(zieltext).includes(suchbegriff);
+      });
+
+      gefilterteTorten.forEach((t) => {
         const safeName = escapeHtml(t.name);
-        const safeNotiz = escapeHtml(t.notiz ?? "");
-        const actionArgs = `'${escapeQuotes(t.id)}','${escapeQuotes(t.name)}','${escapeQuotes(t.notiz ?? "")}'`;
-        const noteContent = safeNotiz || "Keine Notiz hinterlegt.";
-        const noteClass = safeNotiz ? "cake-item-note" : "cake-item-note cake-item-empty";
+        const safeFuerWen = escapeHtml(t.fuer_wen ?? "");
+        const fuerWenText = safeFuerWen || "-";
+
+        const safeId = escapeQuotes(String(t.id));
+        const ersteBild = Array.isArray(t.bild) && t.bild.length ? byteaToDataUrl(t.bild[0]) : "";
+        const coverHtml = ersteBild ? `<img class="cake-cover" src="${ersteBild}" alt="Torte Bild" />` : "";
+        const klasse = statusClass(t.status);
+        const dueText = t.due_to ? `Bis: ${escapeHtml(formatDueDate(t.due_to))}` : "";
+        const dueHtml = dueText ? `<p class="cake-due">${dueText}</p>` : "";
+
+        let statusIconHtml = "";
+        if (t.status === true) {
+          statusIconHtml = '<span class="cake-status-icon cake-status-icon-done" aria-label="Fertig">✓</span>';
+        } else if (t.status === false) {
+          statusIconHtml = '<span class="cake-status-icon cake-status-icon-cancelled" aria-label="Abgebrochen">✕</span>';
+        }
 
         cardsHtml += `
-          <article class="cake-item" role="button" tabindex="0" onclick="bearbeiten(${actionArgs})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();bearbeiten(${actionArgs});}">
-            <div class="cake-item-name">${safeName}</div>
-            <p class="${noteClass}">${noteContent}</p>
+          <article class="cake-item ${klasse}" role="button" tabindex="0" onclick="bearbeitenById('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();bearbeitenById('${safeId}');} ">
+            ${coverHtml}
+            ${dueHtml}
+            <div class="cake-title-row">
+              <div>
+                <div class="cake-item-name">${safeName}</div>
+                <p class="cake-item-for">${fuerWenText}</p>
+              </div>
+              ${statusIconHtml}
+            </div>
           </article>
         `;
       });
+
+      if (!cardsHtml) {
+        cardsHtml = '<p class="mb-0 text-muted">Keine Torten gefunden.</p>';
+      }
 
       document.getElementById("tortenListe").innerHTML = cardsHtml;
     }
@@ -398,9 +851,305 @@
       notizFeld.style.height = `${notizFeld.scrollHeight}px`;
     }
 
+    function bytesToBase64(bytes) {
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+      }
+      return btoa(binary);
+    }
+
+    function byteaToDataUrl(value) {
+      if (!value) return "";
+      const bytes = byteaHexToBytes(value);
+      const mime = detectImageMime(bytes);
+      return `data:${mime};base64,${bytesToBase64(bytes)}`;
+    }
+
+    function statusClass(status) {
+      if (status === true) return "cake-status-done";
+      if (status === false) return "cake-status-cancelled";
+      return "cake-status-pending";
+    }
+
+    function statusLabel(status) {
+      if (status === true) return "Fertig";
+      if (status === false) return "Abgebrochen";
+      return "In Bearbeitung";
+    }
+
+    function clearPreviewObjectUrls() {
+      previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      previewObjectUrls = [];
+    }
+
+    function detectImageMime(bytes) {
+      if (bytes.length >= 4 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+      if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+      if (bytes.length >= 4 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return "image/webp";
+      if (bytes.length >= 3 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return "image/gif";
+      return "application/octet-stream";
+    }
+
+    function byteaHexToBytes(value) {
+      const cleaned = String(value).replace(/^\\x/, "");
+      const out = new Uint8Array(cleaned.length / 2);
+      for (let i = 0; i < cleaned.length; i += 2) {
+        out[i / 2] = parseInt(cleaned.slice(i, i + 2), 16);
+      }
+      return out;
+    }
+
+    function renderBildPreview() {
+      clearPreviewObjectUrls();
+      const preview = document.getElementById("bildPreview");
+      const bestehendeSichtbar = bestehendeBilder
+        .map((entry, index) => ({ entry, index }))
+        .filter(({ index }) => !geloeschteBildIndizes.has(index));
+
+      if (!bestehendeSichtbar.length && !neueBildDateien.length) {
+        preview.innerHTML = "";
+        return;
+      }
+
+      const bestehendeHtml = bestehendeSichtbar.map(({ entry, index }) => {
+        const bytes = byteaHexToBytes(entry);
+        const blob = new Blob([bytes], { type: detectImageMime(bytes) });
+        const url = URL.createObjectURL(blob);
+        const safeUrl = escapeQuotes(url);
+        previewObjectUrls.push(url);
+        return `
+          <div class="bild-preview-item">
+            <img src="${url}" alt="Tortenbild" class="preview-clickable" role="button" tabindex="0" onclick="zeigeBildDetail('${safeUrl}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();zeigeBildDetail('${safeUrl}');}" />
+            <span class="bild-badge">DB</span>
+            <button type="button" class="bild-remove" onclick="entferneBild('existing', ${index})" aria-label="Bild entfernen">x</button>
+          </div>
+        `;
+      });
+
+      const neuHtml = neueBildDateien.map((file, index) => {
+          const url = URL.createObjectURL(file);
+          const safeUrl = escapeQuotes(url);
+          previewObjectUrls.push(url);
+          return `
+          <div class="bild-preview-item">
+            <img src="${url}" alt="Neue Bildvorschau" class="preview-clickable" role="button" tabindex="0" onclick="zeigeBildDetail('${safeUrl}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();zeigeBildDetail('${safeUrl}');}" />
+            <span class="bild-badge">Neu</span>
+            <button type="button" class="bild-remove" onclick="entferneBild('new', ${index})" aria-label="Bild entfernen">x</button>
+          </div>
+        `;
+        });
+
+      preview.innerHTML = [...bestehendeHtml, ...neuHtml].join("");
+      syncEditModeControls();
+    }
+
+    function isEditMode() {
+      return editModeToggle.checked;
+    }
+
+    function syncEditModeControls() {
+      const controls = document.querySelectorAll("#formularOverlay input, #formularOverlay select, #formularOverlay textarea, #formularOverlay button");
+      controls.forEach((el) => {
+        if (el === editModeToggle || el === closeButton) return;
+        el.disabled = !isEditMode();
+      });
+
+      toggleErdbeerOption();
+      renderGroessenNachTyp(document.getElementById("groesseStandard").value);
+    }
+
+    function setEditMode(enabled) {
+      editModeToggle.checked = enabled;
+      syncEditModeControls();
+    }
+
+    async function fileToByteaHex(file) {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      return `\\x${hex}`;
+    }
+
+    function normalizeArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function mapLegacyFuellung(value) {
+      if (value === "Joghurtfuellung") return "Yogurette";
+      if (value === "Snickersfuellung") return "Snickersfüllung";
+      if (value === "Frischkaesecreme") return "Frischkäsecreme";
+      if (value === "Beeren") return "Beerenfüllung";
+      return value;
+    }
+
+    function mapLegacyBoden(value) {
+      if (value === "Loeffelbiskuit") return "Löffelbiskuit";
+      if (value === "Boden nach Wunsch") return "Boden nach Wunsch:";
+      return value;
+    }
+
+    function mapLegacyGanache(value) {
+      if (value === "Weisse Schokolade") return "Weiße Schokolade";
+      return value;
+    }
+
+    function getCheckedValues(groupName) {
+      return Array.from(document.querySelectorAll(`input[name="${groupName}"]:checked`)).map((el) => el.value);
+    }
+
+    function setCheckedValues(groupName, values) {
+      const wanted = new Set(normalizeArray(values));
+      document.querySelectorAll(`input[name="${groupName}"]`).forEach((el) => {
+        el.checked = wanted.has(el.value);
+      });
+    }
+
+    const GROESSEN_NACH_TYP = {
+      "Rechteck/Viereck": ["24x20 cm - 46x38 cm", "35 x 24 cm", "37 x 32 cm", "36,5 x 16 cm"],
+      "Rund": ["Ø 18 cm", "Ø 24 cm", "Ø 26 cm", "Ø 28 cm", "Ø 31 cm"],
+      "Individuell": []
+    };
+
+    function toggleErdbeerOption() {
+      const hatErdbeersahne = document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').checked;
+      const feld = document.getElementById("frischeErdbeeren");
+      feld.disabled = !hatErdbeersahne || !isEditMode();
+      if (!hatErdbeersahne) {
+        feld.checked = false;
+      }
+    }
+
+    function renderGroessenNachTyp(selectedValue = "") {
+      const typ = document.getElementById("groesseTyp").value;
+      const select = document.getElementById("groesseStandard");
+      const optionen = GROESSEN_NACH_TYP[typ] ?? [];
+
+      select.innerHTML = `<option value="">${optionen.length ? "Bitte auswählen" : "Keine Standardmaße"}</option>`;
+      optionen.forEach((opt) => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.textContent = opt;
+        select.appendChild(option);
+      });
+
+      select.disabled = !typ || !optionen.length || !isEditMode();
+      if (selectedValue && optionen.includes(selectedValue)) {
+        select.value = selectedValue;
+      }
+    }
+
+    function parseTextareaList(value) {
+      return String(value)
+        .split(/\r?\n|,/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function formatDueDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} - ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function toDatetimeLocal(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function clearFormSelection() {
+      setCheckedValues("boden", []);
+      setCheckedValues("fuellung", []);
+      setCheckedValues("ganache", []);
+      document.getElementById("frischeErdbeeren").checked = false;
+      document.getElementById("bodenWunschText").value = "";
+      document.getElementById("fruchtWunschText").value = "";
+      document.getElementById("ganacheWunschText").value = "";
+      document.getElementById("groesseTyp").value = "";
+      document.getElementById("groesseStandard").innerHTML = '<option value="">Bitte zuerst Typ wählen</option>';
+      document.getElementById("groesseIndividuell").value = "";
+      document.getElementById("fondantFarbeText").value = "";
+      document.getElementById("fuerWen").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("statusSelect").value = "";
+      document.getElementById("lactosefrei").checked = false;
+      document.getElementById("dueTo").value = "";
+      document.getElementById("bildInput").value = "";
+      bestehendeBilder = [];
+      geloeschteBildIndizes = new Set();
+      neueBildDateien = [];
+      toggleErdbeerOption();
+      renderGroessenNachTyp();
+      renderBildPreview();
+    }
+
+    function fillFormFromRow(row) {
+      document.getElementById("name").value = row.name ?? "";
+      document.getElementById("fuerWen").value = row.fuer_wen ?? "";
+      document.getElementById("price").value = row.price ?? "";
+      document.getElementById("statusSelect").value = row.status === null ? "" : String(row.status);
+      document.getElementById("notiz").value = row.notiz ?? "";
+      document.getElementById("dueTo").value = toDatetimeLocal(row.due_to);
+      document.getElementById("lactosefrei").checked = Boolean(row.lactosefrei);
+
+      const bodenWerte = normalizeArray(row.boden).map(mapLegacyBoden);
+      const bodenBasis = bodenWerte.filter((entry) => !entry.startsWith("Boden nach Wunsch:"));
+      setCheckedValues("boden", bodenBasis);
+      const bodenExtra = bodenWerte.find((entry) => entry.startsWith("Boden nach Wunsch:"));
+      document.getElementById("bodenWunschText").value = bodenExtra
+        ? bodenExtra.replace(/^Boden nach Wunsch:\s*/u, "")
+        : "";
+
+      const fuellungen = normalizeArray(row.fuellung).map(mapLegacyFuellung);
+      const fuellungBasis = fuellungen.filter((entry) => entry !== "Frische Erdbeeren" && !entry.startsWith("Fruchtfuellung:") && !entry.startsWith("Fruchtfüllung:"));
+      setCheckedValues("fuellung", fuellungBasis);
+      document.getElementById("frischeErdbeeren").checked = fuellungen.includes("Frische Erdbeeren");
+      const fruchtEintrag = fuellungen.find((entry) => entry.startsWith("Fruchtfuellung:") || entry.startsWith("Fruchtfüllung:"));
+      document.getElementById("fruchtWunschText").value = fruchtEintrag
+        ? fruchtEintrag.replace(/^Fruchtfuellung:\s*/u, "").replace(/^Fruchtfüllung:\s*/u, "")
+        : "";
+
+      const ganacheWerte = normalizeArray(row.ganache).map(mapLegacyGanache);
+      const ganacheBasis = ganacheWerte.filter((entry) => !entry.startsWith("Ganache nach Wunsch:"));
+      setCheckedValues("ganache", ganacheBasis);
+      const ganacheExtra = ganacheWerte.find((entry) => entry.startsWith("Ganache nach Wunsch:"));
+      document.getElementById("ganacheWunschText").value = ganacheExtra
+        ? ganacheExtra.replace(/^Ganache nach Wunsch:\s*/u, "")
+        : "";
+
+      const fondantWerte = normalizeArray(row.fondant_farbe);
+      document.getElementById("fondantFarbeText").value = fondantWerte.join("\n");
+
+      const typ = row.groesse_typ ?? "";
+      document.getElementById("groesseTyp").value = typ;
+      renderGroessenNachTyp(row.groesse ?? "");
+      const standardGroessen = new Set(Object.values(GROESSEN_NACH_TYP).flat());
+      document.getElementById("groesseIndividuell").value = row.groesse && !standardGroessen.has(row.groesse) ? row.groesse : "";
+
+      bestehendeBilder = normalizeArray(row.bild);
+      geloeschteBildIndizes = new Set();
+      neueBildDateien = [];
+      document.getElementById("bildInput").value = "";
+      toggleErdbeerOption();
+      renderBildPreview();
+    }
+
     function openOverlay() {
       formularOverlay.classList.remove("d-none");
-      requestAnimationFrame(autoResizeNotiz);
+      formularOverlay.scrollTop = 0;
+      if (overlayPanel) {
+        overlayPanel.scrollTop = 0;
+      }
+      requestAnimationFrame(() => {
+        autoResizeNotiz();
+        syncEditModeControls();
+      });
     }
 
     function escapeQuotes(text) {
@@ -425,24 +1174,79 @@
       document.getElementById("formularTitel").innerText = "Neue Torte";
       document.getElementById("name").value = "";
       document.getElementById("notiz").value = "";
+      clearFormSelection();
+      setEditMode(true);
       openOverlay();
     };
 
     window.speichern = async function () {
-      const name = document.getElementById("name").value;
+      if (!isEditMode()) {
+        return;
+      }
+
+      const name = document.getElementById("name").value.trim();
+      const fuerWen = document.getElementById("fuerWen").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const statusRaw = document.getElementById("statusSelect").value;
       const notiz = document.getElementById("notiz").value;
+      const dueTo = document.getElementById("dueTo").value;
+      const groesseTyp = document.getElementById("groesseTyp").value;
+      const groesseStandard = document.getElementById("groesseStandard").value;
+      const groesseIndividuell = document.getElementById("groesseIndividuell").value.trim();
+      const neueBilderHex = await Promise.all(neueBildDateien.map((file) => fileToByteaHex(file)));
+      const verbleibendeBilder = bestehendeBilder.filter((_, index) => !geloeschteBildIndizes.has(index));
+      const bildArray = [...verbleibendeBilder, ...neueBilderHex];
+      const statusValue = statusRaw === "" ? null : statusRaw === "true";
+
+      const fuellungWerte = getCheckedValues("fuellung");
+      if (document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').checked && document.getElementById("frischeErdbeeren").checked) {
+        fuellungWerte.push("Frische Erdbeeren");
+      }
+      const fruchtWunsch = document.getElementById("fruchtWunschText").value.trim();
+      if (fruchtWunsch) {
+        fuellungWerte.push(`Fruchtfüllung: ${fruchtWunsch}`);
+      }
+
+      const ganacheWerte = getCheckedValues("ganache");
+      const ganacheWunsch = document.getElementById("ganacheWunschText").value.trim();
+      if (ganacheWunsch) {
+        ganacheWerte.push(`Ganache nach Wunsch: ${ganacheWunsch}`);
+      }
+
+      const bodenWerte = getCheckedValues("boden");
+      const bodenWunsch = document.getElementById("bodenWunschText").value.trim();
+      if (bodenWunsch) {
+        bodenWerte.push(`Boden nach Wunsch: ${bodenWunsch}`);
+      }
+
+      const payload = {
+        name,
+        fuer_wen: fuerWen || null,
+        price: price || null,
+        status: statusValue,
+        notiz,
+        due_to: dueTo || null,
+        bild: bildArray,
+        boden: bodenWerte,
+        fuellung: fuellungWerte,
+        ganache: ganacheWerte,
+        fondant_farbe: parseTextareaList(document.getElementById("fondantFarbeText").value),
+        lactosefrei: document.getElementById("lactosefrei").checked,
+        groesse_typ: groesseTyp || null,
+        groesse: groesseStandard || groesseIndividuell || null
+      };
 
       let error;
 
       if (aktuelleId) {
         const result = await supabase
           .from("Torten")
-          .update({ name, notiz })
+          .update(payload)
           .eq("id", aktuelleId);
 
         error = result.error;
       } else {
-        const result = await supabase.from("Torten").insert({ name, notiz });
+        const result = await supabase.from("Torten").insert(payload);
         error = result.error;
       }
 
@@ -454,16 +1258,54 @@
       }
     };
 
-    window.bearbeiten = function (id, name, notiz) {
-      aktuelleId = id;
+    window.bearbeitenById = function (id) {
+      const row = tortenDaten.find((eintrag) => String(eintrag.id) === String(id));
+      if (!row) return;
+
+      aktuelleId = row.id;
       document.getElementById("formularTitel").innerText = "Torte bearbeiten";
-      document.getElementById("name").value = name;
-      document.getElementById("notiz").value = notiz;
+      fillFormFromRow(row);
+      setEditMode(false);
       openOverlay();
     };
 
     window.formularSchliessen = function () {
       formularOverlay.classList.add("d-none");
+      bildDetailSchliessen();
+      clearPreviewObjectUrls();
+    };
+
+    window.zeigeBildDetail = function (src) {
+      if (!src) return;
+      bildDetailImage.src = src;
+      bildDetailOverlay.classList.remove("d-none");
+    };
+
+    window.bildDetailSchliessen = function () {
+      bildDetailOverlay.classList.add("d-none");
+      bildDetailImage.src = "";
+    };
+
+    window.bildDetailClick = function (event) {
+      if (event.target === bildDetailOverlay) {
+        bildDetailSchliessen();
+      }
+    };
+
+    window.entferneBild = function (typ, index) {
+      if (!isEditMode()) {
+        return;
+      }
+
+      if (typ === "existing") {
+        geloeschteBildIndizes.add(index);
+      }
+
+      if (typ === "new") {
+        neueBildDateien.splice(index, 1);
+      }
+
+      renderBildPreview();
     };
 
     window.overlayClick = function (event) {
@@ -473,12 +1315,34 @@
     };
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !bildDetailOverlay.classList.contains("d-none")) {
+        bildDetailSchliessen();
+        return;
+      }
+
       if (event.key === "Escape" && !formularOverlay.classList.contains("d-none")) {
         formularSchliessen();
       }
     });
 
     document.getElementById("notiz").addEventListener("input", autoResizeNotiz);
+    editModeToggle.addEventListener("change", syncEditModeControls);
+    document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').addEventListener("change", toggleErdbeerOption);
+    document.getElementById("groesseTyp").addEventListener("change", () => renderGroessenNachTyp());
+    tortenSuche.addEventListener("input", renderTortenListe);
+    document.getElementById("bildInput").addEventListener("change", (event) => {
+      if (!isEditMode()) {
+        event.target.value = "";
+        return;
+      }
+
+      const ausgewaehlt = Array.from(event.target.files ?? []);
+      if (ausgewaehlt.length) {
+        neueBildDateien = [...neueBildDateien, ...ausgewaehlt];
+        renderBildPreview();
+      }
+      event.target.value = "";
+    });
   </script>
 </body>
 </html>
