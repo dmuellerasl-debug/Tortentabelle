@@ -1,1045 +1,484 @@
-<<<<<<< HEAD
-
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Tortentabelle</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tortentabelle</title>
 
-<style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 30px;
-}
+  <style>
+    :root {
+      --cake-cream: #fff8ef;
+      --cake-rose: #e45757;
+      --cake-berry: #7c2e2e;
+      --cake-peach: #ffc78e;
+      --cake-mint: #d9f0df;
+      --cake-ink: #2c1a1a;
+      --glass: rgba(255, 255, 255, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --shadow-soft: 0 18px 50px rgba(78, 30, 30, 0.18);
+    }
 
-input, textarea {
-    width: 300px;
-    padding: 8px;
-    margin: 5px 0;
-}
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      color: var(--cake-ink);
+      background:
+        radial-gradient(circle at 8% 12%, rgba(255, 199, 142, 0.55), transparent 42%),
+        radial-gradient(circle at 92% 82%, rgba(217, 240, 223, 0.7), transparent 38%),
+        linear-gradient(135deg, #ffe9cf 0%, #fff7ea 48%, #f6fff9 100%);
+      overflow-x: hidden;
+    }
 
-textarea {
-    height: 80px;
-}
+    .hero-decor {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-button {
-    padding: 8px 14px;
-    margin: 5px;
-    cursor: pointer;
-}
+    .hero-decor::before,
+    .hero-decor::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(0.2px);
+      animation: floaty 7s ease-in-out infinite;
+    }
 
-table {
-    border-collapse: collapse;
-    margin-top: 20px;
-    width: 100%;
-}
+    .hero-decor::before {
+      width: 260px;
+      height: 260px;
+      background: rgba(228, 87, 87, 0.15);
+      top: 7%;
+      right: -70px;
+    }
 
-td, th {
-    border: 1px solid #ccc;
-    padding: 8px;
-    margin: 0;
-}
+    .hero-decor::after {
+      width: 320px;
+      height: 320px;
+      background: rgba(124, 46, 46, 0.12);
+      bottom: -140px;
+      left: -90px;
+      animation-delay: -2.5s;
+    }
 
-#app {
-    display:none;
-}
+    .page-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.2rem;
+    }
 
-#formular {
-    display:none;
-    border:1px solid #ccc;
-    padding:15px;
-    margin-top:20px;
-}
+    .glass-card {
+      backdrop-filter: blur(10px);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      box-shadow: var(--shadow-soft);
+    }
 
-</style>
+    .brand-title {
+      font-family: "Fraunces", serif;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      line-height: 1.05;
+      margin: 0;
+      color: var(--cake-berry);
+      font-size: clamp(1.9rem, 4.5vw, 3rem);
+    }
 
+    .brand-sub {
+      margin: 0;
+      color: rgba(44, 26, 26, 0.78);
+      font-size: clamp(0.95rem, 2.2vw, 1.08rem);
+    }
+
+    .btn-cake {
+      border: 0;
+      border-radius: 14px;
+      padding: 0.62rem 1.05rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn-cake:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(124, 46, 46, 0.2);
+    }
+
+    .btn-cake-primary {
+      background: linear-gradient(120deg, var(--cake-rose), #c63f3f);
+      color: #fff;
+    }
+
+    .btn-cake-soft {
+      background: #fff;
+      color: var(--cake-berry);
+      border: 1px solid rgba(124, 46, 46, 0.16);
+    }
+
+    .section-enter {
+      animation: slideFade 0.6s ease both;
+    }
+
+    .section-enter.delay-1 {
+      animation-delay: 0.08s;
+    }
+
+    .section-enter.delay-2 {
+      animation-delay: 0.16s;
+    }
+
+    .form-control,
+    .form-control:focus {
+      border-radius: 12px;
+      border-color: rgba(124, 46, 46, 0.22);
+      box-shadow: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(228, 87, 87, 0.12);
+      color: var(--cake-berry);
+      border-radius: 999px;
+      padding: 0.2rem 0.72rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .cake-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .cake-item {
+      border-radius: 16px;
+      border: 1px solid rgba(124, 46, 46, 0.14);
+      background: rgba(255, 255, 255, 0.86);
+      padding: 0.95rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .cake-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(124, 46, 46, 0.12);
+    }
+
+    .cake-item:focus-visible {
+      outline: 2px solid rgba(124, 46, 46, 0.35);
+      outline-offset: 2px;
+    }
+
+    .cake-item-name {
+      color: var(--cake-berry);
+      font-family: "Fraunces", serif;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      font-size: 1.1rem;
+    }
+
+    .cake-item-note {
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: rgba(44, 26, 26, 0.9);
+      margin: 0;
+    }
+
+    .cake-item-empty {
+      color: rgba(44, 26, 26, 0.6);
+      font-style: italic;
+    }
+
+    .overlay-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1080;
+      background: rgba(44, 26, 26, 0.38);
+      backdrop-filter: blur(2px);
+      padding: 1rem;
+      display: grid;
+      place-items: start center;
+      overflow-y: auto;
+    }
+
+    .overlay-panel {
+      width: min(620px, 100%);
+      margin: auto 0;
+    }
+
+    #notiz {
+      overflow: hidden;
+      resize: none;
+    }
+
+    @keyframes slideFade {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes floaty {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+  </style>
 </head>
-
-
 <body>
-
-
-<div id="loginBox">
-
-<h2>Login</h2>
-
-<input id="email" placeholder="E-Mail">
-<br>
-
-<input id="password" type="password" placeholder="Passwort">
-<br>
-
-<button onclick="login()">
-Einloggen
-</button>
-
-</div>
-
-
-
-<div id="app">
-
-<h1>🍰 Tortentabelle</h1>
-
-
-<button onclick="neueTorte()">
-+ Neue Torte
-</button>
-
-<button onclick="logout()">
-Logout
-</button>
-
-
-
-<div id="formular">
-
-<h2 id="formularTitel">
-Neue Torte
-</h2>
-
-
-<input id="name" placeholder="Name">
-<br>
-
-<textarea id="notiz" placeholder="Notiz"></textarea>
-<br>
-
-
-<button onclick="speichern()">
-Speichern
-</button>
-
-<button onclick="formularSchliessen()">
-Abbrechen
-</button>
-
-
-</div>
-
-
-
-<h2>Übersicht</h2>
-
-
-<table>
-
-<thead>
-<tr>
-<th>Name</th>
-<th>Notiz</th>
-<th>Aktion</th>
-</tr>
-</thead>
-
-
-<tbody id="tortenListe">
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-
-
-<script type="module">
-
-
-import { createClient }
-from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-
-
-const supabaseUrl = 'https://cwojlvvavtneuhgicoia.supabase.co';
-const supabaseKey = 'sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c';
-
-
-
-const supabase =
-createClient(
-    supabaseUrl,
-    supabaseKey
-);
-
-
-
-let aktuelleId = null;
-
-
-
-// Beim Start prüfen
-
-async function start(){
-
-const {data} =
-await supabase.auth.getSession();
-
-
-if(data.session){
-
-    zeigeApp();
-
-}
-
-}
-
-
-start();
-
-
-
-
-// Login
-
-window.login = async function(){
-
-
-const email =
-document.getElementById("email").value;
-
-
-const password =
-document.getElementById("password").value;
-
-
-
-const {error} =
-await supabase.auth.signInWithPassword({
-
-email,
-password
-
-});
-
-
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
-
-
-zeigeApp();
-
-
-}
-
-
-
-
-// App anzeigen
-
-function zeigeApp(){
-
-
-document.getElementById("loginBox")
-.style.display="none";
-
-
-document.getElementById("app")
-.style.display="block";
-
-
-ladeTorten();
-
-
-}
-
-
-
-
-// Logout
-
-window.logout = async function(){
-
-
-await supabase.auth.signOut();
-
-
-location.reload();
-
-
-}
-
-
-
-
-
-// Tabelle laden
-
-async function ladeTorten(){
-
-
-const {data,error} =
-
-await supabase
-
-.from("Torten")
-
-.select("*")
-
-.order("created_at", {ascending:false});
-
-
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
-
-
-
-let html="";
-
-
-
-data.forEach(t=>{
-
-
-html += `
-
-<tr>
-
-<td>${t.name}</td>
-
-<td>${t.notiz ?? ""}</td>
-
-
-<td>
-
-<button onclick="bearbeiten('${t.id}',
-'${escapeQuotes(t.name)}',
-'${escapeQuotes(t.notiz ?? "")}')">
-
-Bearbeiten
-
-</button>
-
-
-</td>
-
-
-</tr>
-
-`;
-
-});
-
-
-
-document.getElementById("tortenListe")
-.innerHTML=html;
-
-
-}
-
-
-
-
-function escapeQuotes(text){
-
-return text
-.replaceAll("'","\\'");
-
-}
-
-
-
-
-
-// Neues Formular
-
-window.neueTorte=function(){
-
-
-aktuelleId=null;
-
-
-document.getElementById("formularTitel")
-.innerText="Neue Torte";
-
-
-document.getElementById("name").value="";
-document.getElementById("notiz").value="";
-
-
-document.getElementById("formular")
-.style.display="block";
-
-
-}
-
-
-
-
-// Speichern / Update
-
-window.speichern = async function(){
-
-
-const name =
-document.getElementById("name").value;
-
-
-const notiz =
-document.getElementById("notiz").value;
-
-
-
-let error;
-
-
-
-if(aktuelleId){
-
-
-// UPDATE
-
-const result =
-
-await supabase
-
-.from("Torten")
-
-.update({
-
-name,
-notiz
-
-})
-
-.eq("id", aktuelleId);
-
-
-error=result.error;
-
-
-}
-
-else{
-
-
-// INSERT
-
-const result =
-
-await supabase
-
-.from("Torten")
-
-.insert({
-
-name,
-notiz
-
-});
-
-
-error=result.error;
-
-
-}
-
-
-
-
-if(error){
-
-alert(error.message);
-
-}
-
-else{
-
-
-formularSchliessen();
-
-ladeTorten();
-
-
-}
-
-
-
-}
-
-
-
-
-// Bearbeiten
-
-window.bearbeiten=function(id,name,notiz){
-
-
-aktuelleId=id;
-
-
-document.getElementById("formularTitel")
-.innerText="Torte bearbeiten";
-
-
-document.getElementById("name").value=name;
-
-document.getElementById("notiz").value=notiz;
-
-
-
-document.getElementById("formular")
-.style.display="block";
-
-
-}
-
-
-
-
-window.formularSchliessen=function(){
-
-
-document.getElementById("formular")
-.style.display="none";
-
-
-}
-
-
-
-
-</script>
-
-
+  <div class="hero-decor"></div>
+
+  <main class="page-shell py-3 py-md-4">
+    <section id="loginBox" class="glass-card p-3 p-md-4 section-enter mx-auto" style="max-width: 560px;">
+      <div class="mb-3">
+        <span class="pill">Backstube Zugang</span>
+      </div>
+      <h1 class="brand-title mb-2">Tortentabelle</h1>
+      <p class="brand-sub mb-4">Melde dich an und verwalte deine Torten übersichtlich auf Handy und Desktop.</p>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold" for="email">E-Mail</label>
+          <input id="email" class="form-control form-control-lg" placeholder="dein.name@mail.de" />
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold" for="password">Passwort</label>
+          <input id="password" type="password" class="form-control form-control-lg" placeholder="Passwort" />
+        </div>
+        <div class="col-12 d-grid d-sm-flex gap-2 pt-1">
+          <button class="btn-cake btn-cake-primary" onclick="login()">Einloggen</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="app" class="d-none">
+      <div class="glass-card p-3 p-md-4 section-enter">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+          <div>
+            <p class="pill mb-2">🍰 Dashboard 🍰</p>
+            <h2 class="brand-title mb-1">Tortentabelle</h2>
+            <p class="brand-sub">Eine Übersicht für alle Tortenprojekte</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn-cake btn-cake-primary" onclick="neueTorte()">+ Neue Torte</button>
+            <button class="btn-cake btn-cake-soft" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-3 p-md-4 mt-3 section-enter delay-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          <h3 class="h4 mb-0" style="font-family: Fraunces, serif; color: var(--cake-berry);">Übersicht</h3>
+        </div>
+
+        <div id="tortenListe" class="cake-grid"></div>
+      </div>
+    </section>
+
+    <div id="formularOverlay" class="overlay-layer d-none" onclick="overlayClick(event)">
+      <div class="overlay-panel glass-card p-3 p-md-4 section-enter" role="dialog" aria-modal="true" aria-labelledby="formularTitel">
+        <h3 id="formularTitel" class="h4 mb-3" style="font-family: Fraunces, serif; color: var(--cake-berry);">Neue Torte</h3>
+        <div class="d-grid gap-3">
+          <div>
+            <label class="form-label fw-semibold" for="name">Name</label>
+            <input id="name" class="form-control" placeholder="z. B. Himbeertraum" />
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="notiz">Notiz</label>
+            <textarea id="notiz" class="form-control" rows="4" placeholder="Wunschdeko, Allergene, Abholzeit ..."></textarea>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn-cake btn-cake-primary" onclick="speichern()">Speichern</button>
+            <button class="btn-cake btn-cake-soft" onclick="formularSchliessen()">Schliessen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://cwojlvvavtneuhgicoia.supabase.co";
+    const supabaseKey = "sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c";
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    let aktuelleId = null;
+
+    const loginBox = document.getElementById("loginBox");
+    const app = document.getElementById("app");
+    const formularOverlay = document.getElementById("formularOverlay");
+
+    async function start() {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        zeigeApp();
+      }
+    }
+
+    start();
+
+    window.login = async function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      zeigeApp();
+    };
+
+    function zeigeApp() {
+      loginBox.classList.add("d-none");
+      app.classList.remove("d-none");
+      ladeTorten();
+    }
+
+    window.logout = async function () {
+      await supabase.auth.signOut();
+      location.reload();
+    };
+
+    async function ladeTorten() {
+      const { data, error } = await supabase
+        .from("Torten")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      let cardsHtml = "";
+
+      data.forEach((t) => {
+        const safeName = escapeHtml(t.name);
+        const safeNotiz = escapeHtml(t.notiz ?? "");
+        const actionArgs = `'${escapeQuotes(t.id)}','${escapeQuotes(t.name)}','${escapeQuotes(t.notiz ?? "")}'`;
+        const noteContent = safeNotiz || "Keine Notiz hinterlegt.";
+        const noteClass = safeNotiz ? "cake-item-note" : "cake-item-note cake-item-empty";
+
+        cardsHtml += `
+          <article class="cake-item" role="button" tabindex="0" onclick="bearbeiten(${actionArgs})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();bearbeiten(${actionArgs});}">
+            <div class="cake-item-name">${safeName}</div>
+            <p class="${noteClass}">${noteContent}</p>
+          </article>
+        `;
+      });
+
+      document.getElementById("tortenListe").innerHTML = cardsHtml;
+    }
+
+    function autoResizeNotiz() {
+      const notizFeld = document.getElementById("notiz");
+      notizFeld.style.height = "auto";
+      notizFeld.style.height = `${notizFeld.scrollHeight}px`;
+    }
+
+    function openOverlay() {
+      formularOverlay.classList.remove("d-none");
+      requestAnimationFrame(autoResizeNotiz);
+    }
+
+    function escapeQuotes(text) {
+      return String(text)
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "");
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    window.neueTorte = function () {
+      aktuelleId = null;
+      document.getElementById("formularTitel").innerText = "Neue Torte";
+      document.getElementById("name").value = "";
+      document.getElementById("notiz").value = "";
+      openOverlay();
+    };
+
+    window.speichern = async function () {
+      const name = document.getElementById("name").value;
+      const notiz = document.getElementById("notiz").value;
+
+      let error;
+
+      if (aktuelleId) {
+        const result = await supabase
+          .from("Torten")
+          .update({ name, notiz })
+          .eq("id", aktuelleId);
+
+        error = result.error;
+      } else {
+        const result = await supabase.from("Torten").insert({ name, notiz });
+        error = result.error;
+      }
+
+      if (error) {
+        alert(error.message);
+      } else {
+        formularSchliessen();
+        ladeTorten();
+      }
+    };
+
+    window.bearbeiten = function (id, name, notiz) {
+      aktuelleId = id;
+      document.getElementById("formularTitel").innerText = "Torte bearbeiten";
+      document.getElementById("name").value = name;
+      document.getElementById("notiz").value = notiz;
+      openOverlay();
+    };
+
+    window.formularSchliessen = function () {
+      formularOverlay.classList.add("d-none");
+    };
+
+    window.overlayClick = function (event) {
+      if (event.target === formularOverlay) {
+        formularSchliessen();
+      }
+    };
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !formularOverlay.classList.contains("d-none")) {
+        formularSchliessen();
+      }
+    });
+
+    document.getElementById("notiz").addEventListener("input", autoResizeNotiz);
+  </script>
 </body>
-=======
-
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Tortentabelle</title>
-
-<style>
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 30px;
-}
-
-input, textarea {
-    width: 300px;
-    padding: 8px;
-    margin: 5px 0;
-}
-
-textarea {
-    height: 80px;
-}
-
-button {
-    padding: 8px 14px;
-    margin: 5px;
-    cursor: pointer;
-}
-
-table {
-    border-collapse: collapse;
-    margin-top: 20px;
-    width: 100%;
-}
-
-td, th {
-    border: 1px solid #ccc;
-    padding: 8px;
-}
-
-#app {
-    display:none;
-}
-
-#formular {
-    display:none;
-    border:1px solid #ccc;
-    padding:15px;
-    margin-top:20px;
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div id="loginBox">
-
-<h2>Login</h2>
-
-<input id="email" placeholder="E-Mail">
-<br>
-
-<input id="password" type="password" placeholder="Passwort">
-<br>
-
-<button onclick="login()">
-Einloggen
-</button>
-
-</div>
-
-
-
-<div id="app">
-
-<h1>🍰 Tortentabelle</h1>
-
-
-<button onclick="neueTorte()">
-+ Neue Torte
-</button>
-
-<button onclick="logout()">
-Logout
-</button>
-
-
-
-<div id="formular">
-
-<h2 id="formularTitel">
-Neue Torte
-</h2>
-
-
-<input id="name" placeholder="Name">
-<br>
-
-<textarea id="notiz" placeholder="Notiz"></textarea>
-<br>
-
-
-<button onclick="speichern()">
-Speichern
-</button>
-
-<button onclick="formularSchliessen()">
-Abbrechen
-</button>
-
-
-</div>
-
-
-
-<h2>Übersicht</h2>
-
-
-<table>
-
-<thead>
-<tr>
-<th>Name</th>
-<th>Notiz</th>
-<th>Aktion</th>
-</tr>
-</thead>
-
-
-<tbody id="tortenListe">
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-
-
-<script type="module">
-
-
-import { createClient }
-from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-
-
-const supabaseUrl = 'https://cwojlvvavtneuhgicoia.supabase.co';
-const supabaseKey = 'sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c';
-
-
-
-const supabase =
-createClient(
-    supabaseUrl,
-    supabaseKey
-);
-
-
-
-let aktuelleId = null;
-
-
-
-// Beim Start prüfen
-
-async function start(){
-
-const {data} =
-await supabase.auth.getSession();
-
-
-if(data.session){
-
-    zeigeApp();
-
-}
-
-}
-
-
-start();
-
-
-
-
-// Login
-
-window.login = async function(){
-
-
-const email =
-document.getElementById("email").value;
-
-
-const password =
-document.getElementById("password").value;
-
-
-
-const {error} =
-await supabase.auth.signInWithPassword({
-
-email,
-password
-
-});
-
-
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
-
-
-zeigeApp();
-
-
-}
-
-
-
-
-// App anzeigen
-
-function zeigeApp(){
-
-
-document.getElementById("loginBox")
-.style.display="none";
-
-
-document.getElementById("app")
-.style.display="block";
-
-
-ladeTorten();
-
-
-}
-
-
-
-
-// Logout
-
-window.logout = async function(){
-
-
-await supabase.auth.signOut();
-
-
-location.reload();
-
-
-}
-
-
-
-
-
-// Tabelle laden
-
-async function ladeTorten(){
-
-
-const {data,error} =
-
-await supabase
-
-.from("Torten")
-
-.select("*")
-
-.order("created_at", {ascending:false});
-
-
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
-
-
-
-let html="";
-
-
-
-data.forEach(t=>{
-
-
-html += `
-
-<tr>
-
-<td>${t.name}</td>
-
-<td>${t.notiz ?? ""}</td>
-
-
-<td>
-
-<button onclick="bearbeiten('${t.id}',
-'${escapeQuotes(t.name)}',
-'${escapeQuotes(t.notiz ?? "")}')">
-
-Bearbeiten
-
-</button>
-
-
-</td>
-
-
-</tr>
-
-`;
-
-});
-
-
-
-document.getElementById("tortenListe")
-.innerHTML=html;
-
-
-}
-
-
-
-
-function escapeQuotes(text){
-
-return text
-.replaceAll("'","\\'");
-
-}
-
-
-
-
-
-// Neues Formular
-
-window.neueTorte=function(){
-
-
-aktuelleId=null;
-
-
-document.getElementById("formularTitel")
-.innerText="Neue Torte";
-
-
-document.getElementById("name").value="";
-document.getElementById("notiz").value="";
-
-
-document.getElementById("formular")
-.style.display="block";
-
-
-}
-
-
-
-
-// Speichern / Update
-
-window.speichern = async function(){
-
-
-const name =
-document.getElementById("name").value;
-
-
-const notiz =
-document.getElementById("notiz").value;
-
-
-
-let error;
-
-
-
-if(aktuelleId){
-
-
-// UPDATE
-
-const result =
-
-await supabase
-
-.from("Torten")
-
-.update({
-
-name,
-notiz
-
-})
-
-.eq("id", aktuelleId);
-
-
-error=result.error;
-
-
-}
-
-else{
-
-
-// INSERT
-
-const result =
-
-await supabase
-
-.from("Torten")
-
-.insert({
-
-name,
-notiz
-
-});
-
-
-error=result.error;
-
-
-}
-
-
-
-
-if(error){
-
-alert(error.message);
-
-}
-
-else{
-
-
-formularSchliessen();
-
-ladeTorten();
-
-
-}
-
-
-
-}
-
-
-
-
-// Bearbeiten
-
-window.bearbeiten=function(id,name,notiz){
-
-
-aktuelleId=id;
-
-
-document.getElementById("formularTitel")
-.innerText="Torte bearbeiten";
-
-
-document.getElementById("name").value=name;
-
-document.getElementById("notiz").value=notiz;
-
-
-
-document.getElementById("formular")
-.style.display="block";
-
-
-}
-
-
-
-
-window.formularSchliessen=function(){
-
-
-document.getElementById("formular")
-.style.display="none";
-
-
-}
-
-
-
-
-</script>
-
-
-</body>
->>>>>>> fb4f12be622fee1819160c4447aa9552c3273159
 </html>
