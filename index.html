@@ -616,7 +616,7 @@
             <input id="name" class="form-control" placeholder="z. B. Himbeertraum" />
           </div>
           <div>
-            <label class="form-label fw-semibold" for="fuerWen">👤 Für wen</label>
+            <label class="form-label fw-semibold" for="fuerWen">👥 Für wen</label>
             <input id="fuerWen" class="form-control" placeholder="z. B. Geburtstag Anna" />
           </div>
           <div>
@@ -624,7 +624,7 @@
             <input id="dueTo" type="datetime-local" class="form-control" />
           </div>
           <div>
-            <label class="form-label fw-semibold" for="price">💶 Preis</label>
+            <label class="form-label fw-semibold" for="price">💸 Preis</label>
             <input id="price" class="form-control" placeholder="z. B. 79,00 EUR" />
           </div>
           <div>
@@ -646,7 +646,7 @@
           </div>
 
           <div>
-            <label class="form-label fw-semibold" for="stockwerkAnzahl">🏢 Anzahl Stockwerke</label>
+            <label class="form-label fw-semibold" for="stockwerkAnzahl">↕ Anzahl Stockwerke</label>
             <select id="stockwerkAnzahl" class="form-control">
               <option value="1" selected>1</option>
               <option value="2">2</option>
@@ -672,7 +672,7 @@
             </fieldset>
 
             <fieldset class="form-box">
-              <legend>🍓 Füllung</legend>
+              <legend>🎊 Füllung</legend>
               <div class="check-list">
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Beerenfüllung" /> 🍊 Beeren</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Frischkäsecreme" /> 🥛 Frischkäsecreme</label>
@@ -680,7 +680,7 @@
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Buttercreme" /> 🧈 Buttercreme</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Schokoladensahne" /> 🍫 Schokoladensahne</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Erdbeersahne" /> 🍓 Erdbeersahne</label>
-                <label class="dependent-field option-toggle"><input id="frischeErdbeeren" type="checkbox" /> 🍓 Frische Erdbeeren</label>
+                <label class="dependent-field option-toggle"><input id="frischeErdbeeren" type="checkbox" /> 🍓 Frische Erdbeeren ✨</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Vanillesahne/leichte Buttercreme" /> 🍦 Vanillesahne/leichte Buttercreme</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Snickersfüllung" /> 🥜 Snickers</label>
                 <label class="option-toggle"><input type="checkbox" name="fuellung" value="Yogurette" /> 🍫 Yogurette</label>
@@ -738,7 +738,7 @@
           <div class="form-box d-flex flex-wrap justify-content-between align-items-center gap-2">
             <label class="option-toggle d-flex align-items-center gap-2 fw-semibold m-0">
               <input id="lactosefrei" type="checkbox" />
-              🥛 Laktosefrei
+              🐄 Laktosefrei
             </label>
           </div>
 
@@ -790,6 +790,7 @@
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     let aktuelleId = null;
+    let aktuelleRootId = null;
     let tortenDaten = [];
     let bestehendeBilder = [];
     let geloeschteBildIndizes = new Set();
@@ -852,7 +853,6 @@
       const { data, error } = await supabase
         .from("Torten")
         .select("*")
-        .is("zu_tortenID", null)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -875,7 +875,13 @@
       const suchbegriff = normalizeSearchText(tortenSuche?.value ?? "").trim();
       let cardsHtml = "";
 
-      const gefilterteTorten = tortenDaten.filter((t) => {
+      const wurzelTorten = tortenDaten.filter((t) => {
+        const zuTorten = t.zu_tortenID ?? t.zu_tortenid ?? null;
+        const stockwerk = Number(t.stockwerk ?? 1);
+        return zuTorten === null && stockwerk === 1;
+      });
+
+      const gefilterteTorten = wurzelTorten.filter((t) => {
         if (!suchbegriff) return true;
         const zieltext = `${t.name ?? ""} ${t.fuer_wen ?? ""}`;
         return normalizeSearchText(zieltext).includes(suchbegriff);
@@ -1021,7 +1027,7 @@
             </fieldset>
 
             <fieldset class="form-box">
-              <legend>🍓 Füllung (${stockwerk})</legend>
+              <legend>🎊 Füllung (${stockwerk})</legend>
               <div class="check-list">
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Beerenfüllung" /> 🍊 Beeren</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Frischkäsecreme" /> 🥛 Frischkäsecreme</label>
@@ -1029,7 +1035,7 @@
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Buttercreme" /> 🧈 Buttercreme</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Schokoladensahne" /> 🍫 Schokoladensahne</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Erdbeersahne" /> 🍓 Erdbeersahne</label>
-                <label class="dependent-field option-toggle"><input id="${refs.idFrischeErdbeeren}" type="checkbox" /> 🍓 Frische Erdbeeren</label>
+                <label class="dependent-field option-toggle"><input id="${refs.idFrischeErdbeeren}" type="checkbox" /> 🍓 Frische Erdbeeren ✨</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Vanillesahne/leichte Buttercreme" /> 🍦 Vanillesahne/leichte Buttercreme</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Snickersfüllung" /> 🥜 Snickers</label>
                 <label class="option-toggle"><input type="checkbox" name="${refs.nameFuellung}" value="Yogurette" /> 🍫 Yogurette</label>
@@ -1290,7 +1296,7 @@
 
     function syncDeleteButtonVisibility() {
       if (!deleteButton) return;
-      deleteButton.classList.toggle("d-none", !aktuelleId);
+      deleteButton.classList.toggle("d-none", !(aktuelleRootId || aktuelleId));
     }
 
     function syncEditModeControls() {
@@ -1550,6 +1556,7 @@
 
     window.neueTorte = function () {
       aktuelleId = null;
+      aktuelleRootId = null;
       document.getElementById("formularTitel").innerText = "Neue Torte";
       document.getElementById("name").value = "";
       document.getElementById("notiz").value = "";
@@ -1624,10 +1631,11 @@
       };
 
       if (aktuelleId) {
+        const rootId = aktuelleRootId || aktuelleId;
         const updateResult = await supabase
           .from("Torten")
           .update(rootPayload)
-          .eq("id", aktuelleId);
+          .eq("id", rootId);
 
         if (updateResult.error) {
           alert(updateResult.error.message);
@@ -1637,14 +1645,14 @@
         const deleteChildrenResult = await supabase
           .from("Torten")
           .delete()
-          .eq("zu_tortenID", aktuelleId);
+          .eq("zu_tortenID", rootId);
 
         if (deleteChildrenResult.error) {
           alert(deleteChildrenResult.error.message);
           return false;
         }
 
-        const childRows = buildChildRows(aktuelleId);
+        const childRows = buildChildRows(rootId);
         if (childRows.length) {
           const insertChildrenResult = await supabase.from("Torten").insert(childRows);
           if (insertChildrenResult.error) {
@@ -1676,7 +1684,7 @@
       }
 
       await formularSchliessen(true);
-      ladeTorten();
+      await ladeTorten();
       return true;
     };
 
@@ -1684,10 +1692,25 @@
       const row = tortenDaten.find((eintrag) => String(eintrag.id) === String(id));
       if (!row) return;
 
+      const rootId = row.zu_tortenID ?? row.zu_tortenid ?? row.id;
+      let rootRow = row;
+      if (String(rootId) !== String(row.id)) {
+        const rootResult = await supabase
+          .from("Torten")
+          .select("*")
+          .eq("id", rootId)
+          .single();
+        if (rootResult.error) {
+          alert(rootResult.error.message);
+          return;
+        }
+        rootRow = rootResult.data;
+      }
+
       const childResult = await supabase
         .from("Torten")
         .select("*")
-        .eq("zu_tortenID", row.id)
+        .eq("zu_tortenID", rootId)
         .order("stockwerk", { ascending: true });
 
       if (childResult.error) {
@@ -1695,10 +1718,10 @@
         return;
       }
 
-      const stockwerkRows = [row, ...(childResult.data ?? [])];
+      const stockwerkRows = [rootRow, ...(childResult.data ?? [])];
       const stockwerkMap = new Map();
       stockwerkRows.forEach((entry) => {
-        const nr = Number(entry.stockwerk ?? (entry.id === row.id ? 1 : null));
+        const nr = Number(entry.stockwerk ?? (entry.id === rootRow.id ? 1 : null));
         if (Number.isFinite(nr) && nr >= 1) {
           stockwerkMap.set(nr, entry);
         }
@@ -1708,9 +1731,10 @@
       stockwerkAnzahl.value = String(Math.min(5, maxStockwerk));
       renderWeitereStockwerke();
 
-      aktuelleId = row.id;
+      aktuelleId = rootRow.id;
+      aktuelleRootId = rootRow.id;
       document.getElementById("formularTitel").innerText = "Torte bearbeiten";
-      fillFormFromRow(row);
+      fillFormFromRow(rootRow);
       for (let stockwerk = 2; stockwerk <= getStockwerkAnzahl(); stockwerk += 1) {
         fillTierFromRow(stockwerk, stockwerkMap.get(stockwerk));
       }
@@ -1721,7 +1745,8 @@
     };
 
     window.loeschenTorte = async function () {
-      if (!aktuelleId) {
+      const rootId = aktuelleRootId || aktuelleId;
+      if (!rootId) {
         return;
       }
 
@@ -1733,7 +1758,7 @@
       const deleteChildrenResult = await supabase
         .from("Torten")
         .delete()
-        .eq("zu_tortenID", aktuelleId);
+        .eq("zu_tortenID", rootId);
 
       if (deleteChildrenResult.error) {
         alert(deleteChildrenResult.error.message);
@@ -1743,7 +1768,7 @@
       const deleteRootResult = await supabase
         .from("Torten")
         .delete()
-        .eq("id", aktuelleId);
+        .eq("id", rootId);
 
       if (deleteRootResult.error) {
         alert(deleteRootResult.error.message);
@@ -1751,7 +1776,7 @@
       }
 
       await formularSchliessen(true);
-      ladeTorten();
+      await ladeTorten();
     };
 
     window.formularSchliessen = async function (forceClose = false) {
@@ -1771,6 +1796,7 @@
       bildDetailSchliessen();
       clearPreviewObjectUrls();
       formularSnapshot = null;
+      aktuelleRootId = null;
     };
 
     window.zeigeBildDetail = function (src) {
