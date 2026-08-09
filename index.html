@@ -1365,12 +1365,24 @@
       }
     }
 
+    async function ladeBitmapVomFile(file) {
+      try {
+        return await ladeBildVomFile(file);
+      } catch {
+        if (typeof createImageBitmap !== "function") {
+          throw new Error("Kein Bilddecoder verfuegbar.");
+        }
+        return await createImageBitmap(file);
+      }
+    }
+
     async function optimiereBildFuerUpload(file, maxKante = 1600, qualitaet = 0.82) {
       if (!(file instanceof File)) return file;
       if (!String(file.type || "").startsWith("image/")) return file;
 
+      let bild = null;
       try {
-        const bild = await ladeBildVomFile(file);
+        bild = await ladeBitmapVomFile(file);
         const breite = Number(bild.naturalWidth || bild.width || 0);
         const hoehe = Number(bild.naturalHeight || bild.height || 0);
         if (breite < 1 || hoehe < 1) {
@@ -1406,6 +1418,10 @@
       } catch (error) {
         console.warn("Bildoptimierung fehlgeschlagen, Original wird hochgeladen:", error);
         return file;
+      } finally {
+        if (typeof ImageBitmap !== "undefined" && bild instanceof ImageBitmap) {
+          bild.close();
+        }
       }
     }
 
@@ -1413,6 +1429,7 @@
       const links = [];
       for (const datei of dateien) {
         const uploadDatei = await optimiereBildFuerUpload(datei);
+        const contentType = String(uploadDatei.type || datei.type || "").trim() || "application/octet-stream";
         const nameSafe = String(uploadDatei.name ?? "bild")
           .toLowerCase()
           .replace(/[^a-z0-9._-]+/g, "-")
@@ -1425,7 +1442,7 @@
           .upload(pfad, uploadDatei, {
             cacheControl: "3600",
             upsert: false,
-            contentType: "image/jpeg"
+            contentType
           });
 
         if (error) {
@@ -2575,14 +2592,15 @@
     tortenSuche.addEventListener("input", renderTortenListe);
     document.getElementById("einnahmenVon").addEventListener("change", renderEinnahmenTabelle);
     document.getElementById("einnahmenBis").addEventListener("change", renderEinnahmenTabelle);
-    document.getElementById("bildInput").addEventListener("change", (event) => {
+    document.getElementById("bildInput").addEventListener("change", async (event) => {
       if (!isEditMode()) {
         setEditMode(true);
       }
 
       const ausgewaehlt = Array.from(event.target.files ?? []);
       if (ausgewaehlt.length) {
-        bildReihenfolge.push(...ausgewaehlt.map((file) => ({
+        const vorbereitet = await Promise.all(ausgewaehlt.map((file) => optimiereBildFuerUpload(file)));
+        bildReihenfolge.push(...vorbereitet.map((file) => ({
           typ: "new",
           file,
           id: `neu-${Date.now()}-${neueBildCounter++}`
