@@ -426,7 +426,7 @@
       color: var(--cake-berry);
       font-weight: 700;
     }
-
+ 
     .overlay-headline {
       margin: 0;
       font-family: "Fraunces", serif;
@@ -445,18 +445,35 @@
 
     .bild-preview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(120px, 360px));
+      justify-content: start;
       gap: 0.5rem;
       margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .bild-preview-grid.is-multi {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .bild-upload-hinweis {
+      font-size: 0.82rem;
+      color: rgba(44, 26, 26, 0.7);
+      margin-top: 0.3rem;
     }
 
     .bild-preview-item {
       aspect-ratio: 1 / 1;
+      max-height: 360px;
       border-radius: 10px;
       border: 1px solid rgba(124, 46, 46, 0.2);
       overflow: hidden;
       background: rgba(255, 255, 255, 0.8);
       position: relative;
+    }
+
+    .bild-preview-grid.is-multi .bild-preview-item {
+      max-height: 180px;
     }
 
     .bild-preview-item img {
@@ -478,6 +495,30 @@
       color: #fff;
       font-weight: 800;
       line-height: 1;
+      cursor: pointer;
+    }
+
+    .bild-sort-controls {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      display: inline-flex;
+      gap: 0.28rem;
+    }
+
+    .bild-sort-btn {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(44, 26, 26, 0.84);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
 
@@ -690,6 +731,12 @@
       }
     }
 
+    @media (max-width: 576px) {
+      .bild-preview-grid.is-multi {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     #notiz {
       overflow: hidden;
       resize: none;
@@ -790,6 +837,12 @@
             <input id="name" class="form-control" placeholder="z. B. Himbeertraum" />
           </div>
           <div>
+            <label class="form-label fw-semibold" for="bildInput">🖼️ Bilder</label>
+            <div id="bildPreview" class="bild-preview-grid"></div>
+            <input id="bildInput" type="file" accept="image/*" multiple class="form-control" />
+            <div class="bild-upload-hinweis">Du kannst mehrere Bilder gleichzeitig auswählen.</div>
+          </div>
+          <div>
             <label class="form-label fw-semibold" for="fuerWen">👥 Für wen</label>
             <input id="fuerWen" class="form-control" placeholder="z. B. Geburtstag Anna" />
           </div>
@@ -814,11 +867,6 @@
           <div>
             <label class="form-label fw-semibold" for="notiz">📝 Notiz</label>
             <textarea id="notiz" class="form-control" rows="4" placeholder="Wunschdeko, Allergene, Abholzeit ..."></textarea>
-          </div>
-          <div>
-            <label class="form-label fw-semibold" for="bildInput">🖼️ Bilder</label>
-            <input id="bildInput" type="file" accept="image/*" multiple class="form-control" />
-            <div id="bildPreview" class="bild-preview-grid"></div>
           </div>
 
           <div>
@@ -1021,8 +1069,8 @@
     let aktuelleRootId = null;
     let tortenDaten = [];
     let bestehendeBilder = [];
-    let geloeschteBildIndizes = new Set();
-    let neueBildDateien = [];
+    let bildReihenfolge = [];
+    let neueBildCounter = 0;
     let previewObjectUrls = [];
     let formularSnapshot = null;
 
@@ -1709,10 +1757,19 @@
         stockwerke,
         lactosefrei: document.getElementById("lactosefrei").checked,
         bestehendeBilder: bestehendeBilder.slice(),
-        geloeschteBildIndizes: Array.from(geloeschteBildIndizes).sort((a, b) => a - b),
-        neueBildDateien: neueBildDateien
-          .map((file) => ({ name: file.name, size: file.size, lastModified: file.lastModified, type: file.type }))
-          .sort((a, b) => `${a.name}|${a.size}|${a.lastModified}`.localeCompare(`${b.name}|${b.size}|${b.lastModified}`, "de-DE"))
+        bildReihenfolge: bildReihenfolge.map((eintrag) => {
+          if (eintrag.typ === "existing") {
+            return { typ: "existing", path: eintrag.path };
+          }
+          const file = eintrag.file;
+          return {
+            typ: "new",
+            name: file?.name ?? "",
+            size: file?.size ?? 0,
+            lastModified: file?.lastModified ?? 0,
+            type: file?.type ?? ""
+          };
+        })
       };
     }
 
@@ -1770,43 +1827,83 @@
     async function renderBildPreview() {
       clearPreviewObjectUrls();
       const preview = document.getElementById("bildPreview");
-      const bestehendeSichtbar = bestehendeBilder
-        .map((entry, index) => ({ entry, index }))
-        .filter(({ index }) => !geloeschteBildIndizes.has(index));
 
-      if (!bestehendeSichtbar.length && !neueBildDateien.length) {
+      if (!bildReihenfolge.length) {
+        preview.classList.remove("is-multi");
         preview.innerHTML = "";
         return;
       }
 
-      const bestehendeHtml = await Promise.all(bestehendeSichtbar.map(async ({ entry, index }) => {
-        const url = await resolveBildUrl(entry);
+      preview.classList.toggle("is-multi", bildReihenfolge.length > 1);
+
+      const gesamt = bildReihenfolge.length;
+      const bilderHtml = await Promise.all(bildReihenfolge.map(async (eintrag, index) => {
+        const isExisting = eintrag.typ === "existing";
+        let url = "";
+        if (isExisting) {
+          url = await resolveBildUrl(eintrag.path);
+        } else if (eintrag.file instanceof File) {
+          url = URL.createObjectURL(eintrag.file);
+          previewObjectUrls.push(url);
+        }
+
         if (!url) return "";
+
         const safeUrl = escapeQuotes(url);
+        const hatSortierung = gesamt > 1;
+        const leftButton = hatSortierung && index > 0
+          ? `<button type="button" class="bild-sort-btn" onclick="bewegeBild(${index}, 'left')" aria-label="Bild nach links">←</button>`
+          : "";
+        const rightButton = hatSortierung && index < gesamt - 1
+          ? `<button type="button" class="bild-sort-btn" onclick="bewegeBild(${index}, 'right')" aria-label="Bild nach rechts">→</button>`
+          : "";
+
         return `
           <div class="bild-preview-item">
             <img src="${url}" alt="Tortenbild" class="preview-clickable" role="button" tabindex="0" onclick="zeigeBildDetail('${safeUrl}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();zeigeBildDetail('${safeUrl}');}" />
-            <span class="bild-badge">DB</span>
-            <button type="button" class="bild-remove" onclick="entferneBild('existing', ${index})" aria-label="Bild entfernen">x</button>
+            <span class="bild-badge">${isExisting ? "DB" : "Neu"}</span>
+            <div class="bild-sort-controls">${leftButton}${rightButton}</div>
+            <button type="button" class="bild-remove" onclick="entferneBild(${index})" aria-label="Bild entfernen">x</button>
           </div>
         `;
       }));
 
-      const neuHtml = neueBildDateien.map((file, index) => {
-          const url = URL.createObjectURL(file);
-          const safeUrl = escapeQuotes(url);
-          previewObjectUrls.push(url);
-          return `
-          <div class="bild-preview-item">
-            <img src="${url}" alt="Neue Bildvorschau" class="preview-clickable" role="button" tabindex="0" onclick="zeigeBildDetail('${safeUrl}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();zeigeBildDetail('${safeUrl}');}" />
-            <span class="bild-badge">Neu</span>
-            <button type="button" class="bild-remove" onclick="entferneBild('new', ${index})" aria-label="Bild entfernen">x</button>
-          </div>
-        `;
-        });
-
-      preview.innerHTML = [...bestehendeHtml.filter(Boolean), ...neuHtml].join("");
+      preview.innerHTML = bilderHtml.filter(Boolean).join("");
       syncEditModeControls();
+    }
+
+    function sichtbareBestehendeBildPfade() {
+      const bestehendeSet = new Set(bestehendeBilder.map((eintrag) => String(eintrag)));
+      return bildReihenfolge
+        .filter((eintrag) => eintrag.typ === "existing" && bestehendeSet.has(String(eintrag.path)))
+        .map((eintrag) => eintrag.path);
+    }
+
+    async function baueBildLinkArrayMitUploads(rootId) {
+      const neueLinksInReihenfolge = [];
+      for (const eintrag of bildReihenfolge) {
+        if (eintrag.typ !== "new" || !(eintrag.file instanceof File)) {
+          continue;
+        }
+        const [neuerLink] = await uploadBildDateien(rootId, [eintrag.file]);
+        if (neuerLink) {
+          neueLinksInReihenfolge.push(neuerLink);
+        }
+      }
+
+      const verbleibendeBestehende = sichtbareBestehendeBildPfade();
+      let neuePosition = 0;
+
+      return bildReihenfolge
+        .map((eintrag) => {
+          if (eintrag.typ === "existing") {
+            return eintrag.path;
+          }
+          const link = neueLinksInReihenfolge[neuePosition] ?? "";
+          neuePosition += 1;
+          return link;
+        })
+        .filter((eintrag) => verbleibendeBestehende.includes(eintrag) || neueLinksInReihenfolge.includes(eintrag));
     }
 
     function isEditMode() {
@@ -2034,8 +2131,7 @@
       document.getElementById("dueTo").value = "";
       document.getElementById("bildInput").value = "";
       bestehendeBilder = [];
-      geloeschteBildIndizes = new Set();
-      neueBildDateien = [];
+      bildReihenfolge = [];
       toggleErdbeerOption(1);
       renderGroessenNachTyp(1);
       void renderBildPreview();
@@ -2054,8 +2150,7 @@
       fillTierFromRow(1, row);
 
       bestehendeBilder = normalizeArray(row[bilderLinksColumn]);
-      geloeschteBildIndizes = new Set();
-      neueBildDateien = [];
+      bildReihenfolge = bestehendeBilder.map((pfad) => ({ typ: "existing", path: pfad }));
       document.getElementById("bildInput").value = "";
       toggleErdbeerOption(1);
       void renderBildPreview();
@@ -2123,7 +2218,6 @@
       const dueTo = document.getElementById("dueTo").value;
       const stockwerkGesamt = getStockwerkAnzahl();
       const stockwerk1 = collectTierData(1);
-      const verbleibendeBilder = bestehendeBilder.filter((_, index) => !geloeschteBildIndizes.has(index));
       const statusValue = statusRaw === "" ? null : statusRaw === "true";
       const priceWert = parseEuroWert(priceWertRaw);
 
@@ -2176,8 +2270,7 @@
 
       if (aktuelleId) {
         const rootId = aktuelleRootId || aktuelleId;
-        const neueBildLinks = await uploadBildDateien(rootId, neueBildDateien);
-        const bildLinkArray = [...verbleibendeBilder, ...neueBildLinks];
+        const bildLinkArray = await baueBildLinkArrayMitUploads(rootId);
         rootPayload[bilderLinksColumn] = bildLinkArray;
 
         const updateResult = await supabase
@@ -2209,8 +2302,9 @@
           }
         }
 
+        const verbleibendeSet = new Set(sichtbareBestehendeBildPfade().map((eintrag) => String(eintrag)));
         const entferntePfade = extractStoragePaths(
-          bestehendeBilder.filter((_, index) => geloeschteBildIndizes.has(index))
+          bestehendeBilder.filter((eintrag) => !verbleibendeSet.has(String(eintrag)))
         );
         if (entferntePfade.length) {
           await supabase.storage.from(storageBucket).remove(entferntePfade);
@@ -2228,10 +2322,10 @@
         }
 
         const rootId = insertRootResult.data?.id;
-        const neueBildLinks = await uploadBildDateien(rootId, neueBildDateien);
+        const neueBildLinks = await baueBildLinkArrayMitUploads(rootId);
         const updateRootBilderResult = await supabase
           .from("Torten")
-          .update({ [bilderLinksColumn]: [...verbleibendeBilder, ...neueBildLinks] })
+          .update({ [bilderLinksColumn]: neueBildLinks })
           .eq("id", rootId);
 
         if (updateRootBilderResult.error) {
@@ -2394,18 +2488,33 @@
       }
     };
 
-    window.entferneBild = function (typ, index) {
+    window.entferneBild = function (index) {
       if (!isEditMode()) {
         return;
       }
 
-      if (typ === "existing") {
-        geloeschteBildIndizes.add(index);
+      if (index < 0 || index >= bildReihenfolge.length) {
+        return;
       }
 
-      if (typ === "new") {
-        neueBildDateien.splice(index, 1);
+      bildReihenfolge.splice(index, 1);
+
+      void renderBildPreview();
+    };
+
+    window.bewegeBild = function (index, richtung) {
+      if (!isEditMode()) {
+        return;
       }
+
+      const zielIndex = richtung === "left" ? index - 1 : index + 1;
+      if (index < 0 || index >= bildReihenfolge.length || zielIndex < 0 || zielIndex >= bildReihenfolge.length) {
+        return;
+      }
+
+      const temp = bildReihenfolge[index];
+      bildReihenfolge[index] = bildReihenfolge[zielIndex];
+      bildReihenfolge[zielIndex] = temp;
 
       void renderBildPreview();
     };
@@ -2473,7 +2582,11 @@
 
       const ausgewaehlt = Array.from(event.target.files ?? []);
       if (ausgewaehlt.length) {
-        neueBildDateien = [...neueBildDateien, ...ausgewaehlt];
+        bildReihenfolge.push(...ausgewaehlt.map((file) => ({
+          typ: "new",
+          file,
+          id: `neu-${Date.now()}-${neueBildCounter++}`
+        })));
         void renderBildPreview();
       }
       event.target.value = "";
