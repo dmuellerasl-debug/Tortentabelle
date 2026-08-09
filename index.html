@@ -273,6 +273,34 @@
       background: rgba(255, 255, 255, 0.95);
     }
 
+    .cake-cover-wrap {
+      position: relative;
+      margin-bottom: 0.35rem;
+    }
+
+    .cake-cover-wrap .cake-cover {
+      margin-bottom: 0;
+    }
+
+    .cake-cover-count {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.38rem;
+      background: rgba(44, 26, 26, 0.8);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      line-height: 1;
+    }
+
     .cake-due {
       margin: 0 0 0.65rem;
       font-size: 0.8rem;
@@ -1397,9 +1425,13 @@
         const safeId = escapeQuotes(String(t.id));
         const bildLinks = normalizeArray(t[bilderLinksColumn]);
         const ersteBild = bildLinks.length ? await resolveBildUrl(bildLinks[0]) : "";
-        const coverHtml = ersteBild ? `<img class="cake-cover" src="${ersteBild}" alt="Torte Bild" />` : "";
+        const bildAnzahlBadge = bildLinks.length > 1 ? `<span class="cake-cover-count" aria-label="${bildLinks.length} Bilder">${bildLinks.length}</span>` : "";
+        const coverHtml = ersteBild
+          ? `<div class="cake-cover-wrap"><img class="cake-cover" src="${ersteBild}" alt="Torte Bild" />${bildAnzahlBadge}</div>`
+          : "";
         const klasse = statusClass(t.status);
-        const dueText = t.due_to ? `Bis: ${escapeHtml(formatDueDate(t.due_to))}` : "";
+        const duePrefix = t.status === true ? "Am" : "Bis";
+        const dueText = t.due_to ? `${duePrefix}: ${escapeHtml(formatDueDate(t.due_to))}` : "";
         const dueHtml = dueText ? `<p class="cake-due">${dueText}</p>` : "";
 
         let statusIconHtml = "";
