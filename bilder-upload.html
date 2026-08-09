@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tortenbilder Upload</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-1: #fff7ec;
+      --bg-2: #f7fff8;
+      --ink: #2b1b1b;
+      --berry: #7c2e2e;
+      --rose: #e45757;
+      --mint: #d9f0df;
+      --card: rgba(255, 255, 255, 0.78);
+      --line: rgba(124, 46, 46, 0.2);
+      --ok: #18794e;
+      --warn: #a34b1f;
+      --shadow: 0 18px 42px rgba(100, 46, 46, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, rgba(255, 184, 120, 0.45), transparent 36%),
+        radial-gradient(circle at 90% 85%, rgba(217, 240, 223, 0.7), transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1.1rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+
+    h1 {
+      font-family: "Fraunces", serif;
+      margin: 0;
+      line-height: 1.04;
+      color: var(--berry);
+      font-size: clamp(1.5rem, 4.8vw, 2.5rem);
+    }
+
+    p {
+      margin: 0.2rem 0 0;
+    }
+
+    .row {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 820px) {
+      .row.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-weight: 700;
+      color: var(--berry);
+      font-size: 0.95rem;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 0.64rem 0.72rem;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(124, 46, 46, 0.18);
+    }
+
+    .btn-primary {
+      border: 0;
+      color: #fff;
+      background: linear-gradient(120deg, var(--rose), #c63f3f);
+    }
+
+    .btn-soft {
+      background: #fff;
+      color: var(--berry);
+    }
+
+    .btn-inline {
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.86rem;
+    }
+
+    .section {
+      margin-top: 0.9rem;
+      padding-top: 0.9rem;
+      border-top: 1px dashed rgba(124, 46, 46, 0.2);
+    }
+
+    .status {
+      margin-top: 0.7rem;
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      background: rgba(124, 46, 46, 0.08);
+      border: 1px solid rgba(124, 46, 46, 0.16);
+      font-size: 0.9rem;
+    }
+
+    .status.ok {
+      background: rgba(24, 121, 78, 0.12);
+      border-color: rgba(24, 121, 78, 0.3);
+      color: var(--ok);
+    }
+
+    .status.warn {
+      background: rgba(163, 75, 31, 0.1);
+      border-color: rgba(163, 75, 31, 0.32);
+      color: var(--warn);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.55rem;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      margin-top: 0.6rem;
+    }
+
+    .img-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.35rem;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .img-card img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      border: 1px solid rgba(124, 46, 46, 0.16);
+      background: #fff;
+    }
+
+    .meta {
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      background: rgba(124, 46, 46, 0.12);
+      color: var(--berry);
+      font-weight: 700;
+      font-size: 0.74rem;
+      padding: 0.13rem 0.55rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .d-none {
+      display: none !important;
+    }
+
+    .stack {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .small {
+      font-size: 0.82rem;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card">
+      <h1>Tortenbilder in Supabase Storage</h1>
+      <p>Bucket: <strong>Bilder</strong>, Ordner: <strong>Torten</strong>. Gespeichert wird in der Spalte <strong>bilder-links</strong> (text[]).</p>
+
+      <div id="loginView" class="section stack">
+        <div class="row two">
+          <div>
+            <label for="email">E-Mail</label>
+            <input id="email" type="email" autocomplete="username" placeholder="dein.name@mail.de" />
+          </div>
+          <div>
+            <label for="password">Passwort</label>
+            <input id="password" type="password" autocomplete="current-password" placeholder="Passwort" />
+          </div>
+        </div>
+        <div class="inline">
+          <button id="loginBtn" class="btn-primary btn-inline" type="button">Anmelden</button>
+        </div>
+      </div>
+
+      <div id="appView" class="section d-none stack">
+        <div class="inline">
+          <button id="reloadBtn" class="btn-soft btn-inline" type="button">Torten neu laden</button>
+          <button id="logoutBtn" class="btn-soft btn-inline" type="button">Logout</button>
+        </div>
+
+        <div>
+          <label for="torteSelect">Torte auswaehlen</label>
+          <select id="torteSelect">
+            <option value="">Bitte waehlen...</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="bildInput">Neue Bilder</label>
+          <input id="bildInput" type="file" accept="image/*" multiple />
+          <div class="small">Dateien werden nach Bilder/Torten/{tortenId}/ hochgeladen.</div>
+        </div>
+
+        <label class="inline small">
+          <input id="deleteRemovedFromStorage" type="checkbox" style="width:auto" />
+          Entfernte Links auch physisch aus Storage loeschen
+        </label>
+
+        <div class="inline">
+          <button id="saveBtn" class="btn-primary btn-inline" type="button">Speichern (Upload + Update bilder-links)</button>
+        </div>
+
+        <div>
+          <div class="small">Bestehende Bilder in bilder-links</div>
+          <div id="existingGrid" class="grid"></div>
+        </div>
+
+        <div>
+          <div class="small">Neue Bilder (noch nicht gespeichert)</div>
+          <div id="newGrid" class="grid"></div>
+        </div>
+      </div>
+
+      <div id="status" class="status">Bereit.</div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://cwojlvvavtneuhgicoia.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c";
+
+    const TABLE_NAME = "Torten";
+    const BUCKET_NAME = "Bilder";
+    const STORAGE_FOLDER = "Torten";
+    const LINKS_COLUMN = "bilder-links";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const loginView = document.getElementById("loginView");
+    const appView = document.getElementById("appView");
+    const statusBox = document.getElementById("status");
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const reloadBtn = document.getElementById("reloadBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const torteSelect = document.getElementById("torteSelect");
+    const bildInput = document.getElementById("bildInput");
+    const existingGrid = document.getElementById("existingGrid");
+    const newGrid = document.getElementById("newGrid");
+    const deleteRemovedFromStorage = document.getElementById("deleteRemovedFromStorage");
+
+    let tortenRows = [];
+    let selectedId = null;
+    let existingLinks = [];
+    let removedIndices = new Set();
+    let newFiles = [];
+    let previewUrls = [];
+
+    function setStatus(text, type = "") {
+      statusBox.textContent = text;
+      statusBox.classList.remove("ok", "warn");
+      if (type) {
+        statusBox.classList.add(type);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function clearPreviewUrls() {
+      for (const url of previewUrls) {
+        URL.revokeObjectURL(url);
+      }
+      previewUrls = [];
+    }
+
+    function toArray(value) {
+      return Array.isArray(value) ? value.filter(Boolean) : [];
+    }
+
+    function isHttpUrl(text) {
+      return /^https?:\/\//i.test(String(text || ""));
+    }
+
+    function looksLikeStoragePath(text) {
+      const v = String(text || "");
+      return !isHttpUrl(v) && !v.includes("\\") && v.includes("/");
+    }
+
+    async function resolveImageSource(link) {
+      if (!link) return "";
+      const raw = String(link);
+
+      if (isHttpUrl(raw)) {
+        return raw;
+      }
+
+      const storagePath = raw.startsWith(`${BUCKET_NAME}/`) ? raw.slice(BUCKET_NAME.length + 1) : raw;
+      if (!looksLikeStoragePath(storagePath)) {
+        return "";
+      }
+
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .createSignedUrl(storagePath, 3600);
+
+      if (error) {
+        console.warn("Signed URL Fehler fuer", raw, error.message);
+        return "";
+      }
+
+      return data?.signedUrl || "";
+    }
+
+    async function renderExistingGrid() {
+      const visible = existingLinks
+        .map((link, idx) => ({ link, idx }))
+        .filter((item) => !removedIndices.has(item.idx));
+
+      if (!visible.length) {
+        existingGrid.innerHTML = "<div class='small'>Keine bestehenden Links.</div>";
+        return;
+      }
+
+      const resolved = await Promise.all(
+        visible.map(async (item) => ({
+          ...item,
+          src: await resolveImageSource(item.link)
+        }))
+      );
+
+      existingGrid.innerHTML = resolved
+        .map((item) => {
+          const srcHtml = item.src
+            ? `<img src="${item.src}" alt="Bestehendes Bild" />`
+            : "<div class='small'>Kein Preview moeglich</div>";
+          return `
+            <article class="img-card">
+              <span class="chip">DB</span>
+              ${srcHtml}
+              <div class="meta">${escapeHtml(item.link)}</div>
+              <button class="btn-soft btn-inline" type="button" data-remove-existing="${item.idx}">Entfernen</button>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    function renderNewGrid() {
+      if (!newFiles.length) {
+        newGrid.innerHTML = "<div class='small'>Keine neuen Dateien.</div>";
+        return;
+      }
+
+      clearPreviewUrls();
+      const html = newFiles.map((file, index) => {
+        const url = URL.createObjectURL(file);
+        previewUrls.push(url);
+        return `
+          <article class="img-card">
+            <span class="chip">Neu</span>
+            <img src="${url}" alt="Neue Datei" />
+            <div class="meta">${escapeHtml(file.name)}</div>
+            <button class="btn-soft btn-inline" type="button" data-remove-new="${index}">Entfernen</button>
+          </article>
+        `;
+      });
+
+      newGrid.innerHTML = html.join("");
+    }
+
+    async function renderAllImages() {
+      await renderExistingGrid();
+      renderNewGrid();
+    }
+
+    function resetSelectionState() {
+      selectedId = null;
+      existingLinks = [];
+      removedIndices = new Set();
+      newFiles = [];
+      bildInput.value = "";
+      clearPreviewUrls();
+      existingGrid.innerHTML = "<div class='small'>Waehle eine Torte.</div>";
+      newGrid.innerHTML = "<div class='small'>Keine neuen Dateien.</div>";
+    }
+
+    function mapRowLabel(row) {
+      const name = row.name ? String(row.name) : "Ohne Name";
+      const due = row.due_to ? ` - ${new Date(row.due_to).toLocaleDateString("de-DE")}` : "";
+      return `#${row.id} ${name}${due}`;
+    }
+
+    async function loadTorten() {
+      setStatus("Lade Torten...", "");
+
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(`id, name, due_to, stockwerk, zu_tortenID, "${LINKS_COLUMN}"`)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setStatus(`Fehler beim Laden: ${error.message}`, "warn");
+        return;
+      }
+
+      const rows = Array.isArray(data) ? data : [];
+      tortenRows = rows.filter((row) => {
+        const stockwerk = Number(row.stockwerk ?? 1);
+        const parent = row.zu_tortenID ?? null;
+        return stockwerk === 1 && parent === null;
+      });
+
+      torteSelect.innerHTML = "<option value=''>Bitte waehlen...</option>" + tortenRows
+        .map((row) => `<option value="${row.id}">${escapeHtml(mapRowLabel(row))}</option>`)
+        .join("");
+
+      resetSelectionState();
+      setStatus(`Torten geladen: ${tortenRows.length}`, "ok");
+    }
+
+    function sanitizeFileName(name) {
+      return String(name || "datei")
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
+    function fileNameWithoutExtension(name) {
+      const base = String(name || "bild").trim() || "bild";
+      return base.replace(/\.[^./\\]+$/, "") || "bild";
+    }
+
+    async function loadImageFromFile(file) {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const image = new Image();
+        image.decoding = "async";
+        await new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = () => reject(new Error("Bild konnte nicht gelesen werden."));
+          image.src = objectUrl;
+        });
+        return image;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    async function optimizeImageForUpload(file, maxEdge = 1600, quality = 0.82) {
+      if (!(file instanceof File)) return file;
+      if (!String(file.type || "").startsWith("image/")) return file;
+
+      try {
+        const image = await loadImageFromFile(file);
+        const width = Number(image.naturalWidth || image.width || 0);
+        const height = Number(image.naturalHeight || image.height || 0);
+        if (width < 1 || height < 1) {
+          return file;
+        }
+
+        const scale = Math.min(1, maxEdge / Math.max(width, height));
+        const targetWidth = Math.max(1, Math.round(width * scale));
+        const targetHeight = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return file;
+
+        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => {
+            if (value) {
+              resolve(value);
+              return;
+            }
+            reject(new Error("JPEG-Konvertierung fehlgeschlagen."));
+          }, "image/jpeg", quality);
+        });
+
+        return new File([blob], `${fileNameWithoutExtension(file.name)}.jpg`, {
+          type: "image/jpeg",
+          lastModified: Date.now()
+        });
+      } catch (error) {
+        console.warn("Bildoptimierung fehlgeschlagen, Original wird hochgeladen:", error);
+        return file;
+      }
+    }
+
+    function buildStoragePath(cakeId, fileName) {
+      const stamp = Date.now();
+      const rnd = Math.random().toString(36).slice(2, 8);
+      const safe = sanitizeFileName(fileName) || "bild";
+      return `${STORAGE_FOLDER}/${cakeId}/${stamp}-${rnd}-${safe}`;
+    }
+
+    async function uploadFiles(cakeId, files) {
+      const uploadedPaths = [];
+
+      for (const file of files) {
+        const optimizedFile = await optimizeImageForUpload(file);
+        const path = buildStoragePath(cakeId, optimizedFile.name);
+        const { error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(path, optimizedFile, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: "image/jpeg"
+          });
+
+        if (error) {
+          throw new Error(`Upload fehlgeschlagen (${file.name}): ${error.message}`);
+        }
+
+        uploadedPaths.push(path);
+      }
+
+      return uploadedPaths;
+    }
+
+    async function deleteStorageObjects(paths) {
+      if (!paths.length) return;
+      const { error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove(paths);
+
+      if (error) {
+        throw new Error(`Storage-Delete fehlgeschlagen: ${error.message}`);
+      }
+    }
+
+    async function saveSelection() {
+      if (!selectedId) {
+        setStatus("Bitte zuerst eine Torte auswaehlen.", "warn");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      setStatus("Upload und Update laufen...", "");
+
+      try {
+        const visibleLinks = existingLinks.filter((_, idx) => !removedIndices.has(idx));
+        const removedLinks = existingLinks.filter((_, idx) => removedIndices.has(idx));
+
+        const uploadedPaths = await uploadFiles(selectedId, newFiles);
+        const nextLinks = [...visibleLinks, ...uploadedPaths];
+
+        const { error: updateError } = await supabase
+          .from(TABLE_NAME)
+          .update({ [LINKS_COLUMN]: nextLinks })
+          .eq("id", selectedId);
+
+        if (updateError) {
+          throw new Error(`DB-Update fehlgeschlagen: ${updateError.message}`);
+        }
+
+        if (deleteRemovedFromStorage.checked) {
+          const storagePaths = removedLinks
+            .map((link) => String(link || ""))
+            .map((link) => link.startsWith(`${BUCKET_NAME}/`) ? link.slice(BUCKET_NAME.length + 1) : link)
+            .filter((link) => looksLikeStoragePath(link));
+
+          if (storagePaths.length) {
+            await deleteStorageObjects(storagePaths);
+          }
+        }
+
+        const row = tortenRows.find((entry) => String(entry.id) === String(selectedId));
+        if (row) {
+          row[LINKS_COLUMN] = nextLinks;
+        }
+
+        existingLinks = nextLinks;
+        removedIndices = new Set();
+        newFiles = [];
+        bildInput.value = "";
+        await renderAllImages();
+
+        setStatus(`Gespeichert. Neue Anzahl Links: ${nextLinks.length}`, "ok");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setStatus(message, "warn");
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    async function tryAutoSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        setStatus(`Session-Fehler: ${error.message}`, "warn");
+        return;
+      }
+
+      if (data.session) {
+        loginView.classList.add("d-none");
+        appView.classList.remove("d-none");
+        await loadTorten();
+      } else {
+        loginView.classList.remove("d-none");
+        appView.classList.add("d-none");
+        setStatus("Bitte anmelden.", "");
+      }
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        setStatus("Bitte E-Mail und Passwort eingeben.", "warn");
+        return;
+      }
+
+      setStatus("Melde an...", "");
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setStatus(`Login fehlgeschlagen: ${error.message}`, "warn");
+        return;
+      }
+
+      loginView.classList.add("d-none");
+      appView.classList.remove("d-none");
+      await loadTorten();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      resetSelectionState();
+      loginView.classList.remove("d-none");
+      appView.classList.add("d-none");
+      setStatus("Abgemeldet.", "");
+    });
+
+    reloadBtn.addEventListener("click", async () => {
+      await loadTorten();
+    });
+
+    torteSelect.addEventListener("change", async () => {
+      selectedId = torteSelect.value ? Number(torteSelect.value) : null;
+      removedIndices = new Set();
+      newFiles = [];
+      bildInput.value = "";
+      clearPreviewUrls();
+
+      if (!selectedId) {
+        existingLinks = [];
+        await renderAllImages();
+        setStatus("Keine Torte ausgewaehlt.", "");
+        return;
+      }
+
+      const row = tortenRows.find((entry) => String(entry.id) === String(selectedId));
+      existingLinks = row ? toArray(row[LINKS_COLUMN]) : [];
+
+      await renderAllImages();
+      setStatus(`Torte #${selectedId} geladen. Links: ${existingLinks.length}`, "ok");
+    });
+
+    bildInput.addEventListener("change", () => {
+      const picked = Array.from(bildInput.files || []);
+      if (!picked.length) return;
+      newFiles = [...newFiles, ...picked];
+      bildInput.value = "";
+      renderNewGrid();
+      setStatus(`Neue Dateien: ${newFiles.length}`, "");
+    });
+
+    existingGrid.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const idx = target.getAttribute("data-remove-existing");
+      if (idx === null) return;
+      removedIndices.add(Number(idx));
+      await renderExistingGrid();
+      setStatus("Bestehender Link entfernt (noch nicht gespeichert).", "");
+    });
+
+    newGrid.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const idx = target.getAttribute("data-remove-new");
+      if (idx === null) return;
+      newFiles.splice(Number(idx), 1);
+      renderNewGrid();
+      setStatus("Neue Datei entfernt.", "");
+    });
+
+    saveBtn.addEventListener("click", saveSelection);
+
+    window.addEventListener("beforeunload", () => {
+      clearPreviewUrls();
+    });
+
+    tryAutoSession();
+  </script>
+</body>
+</html>

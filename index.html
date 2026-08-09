@@ -789,6 +789,9 @@
     const supabaseKey = "sb_publishable_2bC6ZttBRVp3jhbIhRKYfA_5wPxZL7c";
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const storageBucket = "Bilder";
+    const storageFolder = "Torten";
+    const bilderLinksColumn = "bilder-links";
     let aktuelleId = null;
     let aktuelleRootId = null;
     let tortenDaten = [];
@@ -814,6 +817,7 @@
     const weitereStockwerkeContainer = document.getElementById("weitereStockwerkeContainer");
     let confirmCloseResolver = null;
     let confirmDeleteResolver = null;
+    let renderTortenListeVersion = 0;
 
     async function start() {
       const { data } = await supabase.auth.getSession();
@@ -861,7 +865,7 @@
       }
 
       tortenDaten = data ?? [];
-      renderTortenListe();
+      void renderTortenListe();
     }
 
     function normalizeSearchText(value) {
@@ -871,7 +875,142 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    function renderTortenListe() {
+    function isHttpUrl(value) {
+      return /^https?:\/\//i.test(String(value ?? ""));
+    }
+
+    function normalizeStoragePath(value) {
+      const raw = String(value ?? "").trim();
+      if (!raw) return "";
+      if (raw.startsWith(`${storageBucket}/`)) {
+        return raw.slice(storageBucket.length + 1);
+      }
+      return raw;
+    }
+
+    async function resolveBildUrl(value) {
+      const raw = String(value ?? "").trim();
+      if (!raw) return "";
+      if (isHttpUrl(raw)) return raw;
+
+      const path = normalizeStoragePath(raw);
+      if (!path.includes("/")) {
+        return "";
+      }
+
+      const { data, error } = await supabase.storage
+        .from(storageBucket)
+        .createSignedUrl(path, 3600);
+
+      if (error) {
+        console.warn("Bild-URL konnte nicht signiert werden:", error.message);
+        return "";
+      }
+
+      return data?.signedUrl ?? "";
+    }
+
+    function fileNameOhneEndung(name) {
+      const basis = String(name ?? "bild").trim() || "bild";
+      return basis.replace(/\.[^./\\]+$/, "") || "bild";
+    }
+
+    async function ladeBildVomFile(file) {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const bild = new Image();
+        bild.decoding = "async";
+        await new Promise((resolve, reject) => {
+          bild.onload = resolve;
+          bild.onerror = () => reject(new Error("Bild konnte nicht gelesen werden."));
+          bild.src = objectUrl;
+        });
+        return bild;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    async function optimiereBildFuerUpload(file, maxKante = 1600, qualitaet = 0.82) {
+      if (!(file instanceof File)) return file;
+      if (!String(file.type || "").startsWith("image/")) return file;
+
+      try {
+        const bild = await ladeBildVomFile(file);
+        const breite = Number(bild.naturalWidth || bild.width || 0);
+        const hoehe = Number(bild.naturalHeight || bild.height || 0);
+        if (breite < 1 || hoehe < 1) {
+          return file;
+        }
+
+        const faktor = Math.min(1, maxKante / Math.max(breite, hoehe));
+        const zielBreite = Math.max(1, Math.round(breite * faktor));
+        const zielHoehe = Math.max(1, Math.round(hoehe * faktor));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = zielBreite;
+        canvas.height = zielHoehe;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return file;
+
+        ctx.drawImage(bild, 0, 0, zielBreite, zielHoehe);
+
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => {
+            if (value) {
+              resolve(value);
+              return;
+            }
+            reject(new Error("JPEG-Konvertierung fehlgeschlagen."));
+          }, "image/jpeg", qualitaet);
+        });
+
+        return new File([blob], `${fileNameOhneEndung(file.name)}.jpg`, {
+          type: "image/jpeg",
+          lastModified: Date.now()
+        });
+      } catch (error) {
+        console.warn("Bildoptimierung fehlgeschlagen, Original wird hochgeladen:", error);
+        return file;
+      }
+    }
+
+    async function uploadBildDateien(rootId, dateien) {
+      const links = [];
+      for (const datei of dateien) {
+        const uploadDatei = await optimiereBildFuerUpload(datei);
+        const nameSafe = String(uploadDatei.name ?? "bild")
+          .toLowerCase()
+          .replace(/[^a-z0-9._-]+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "") || "bild";
+        const pfad = `${storageFolder}/${rootId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${nameSafe}`;
+
+        const { error } = await supabase.storage
+          .from(storageBucket)
+          .upload(pfad, uploadDatei, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: "image/jpeg"
+          });
+
+        if (error) {
+          throw new Error(`Upload fehlgeschlagen (${datei.name}): ${error.message}`);
+        }
+
+        links.push(pfad);
+      }
+      return links;
+    }
+
+    function extractStoragePaths(values) {
+      return values
+        .map((value) => normalizeStoragePath(value))
+        .filter((path) => path && path.includes("/") && !isHttpUrl(path));
+    }
+
+    async function renderTortenListe() {
+      const renderVersion = ++renderTortenListeVersion;
       const suchbegriff = normalizeSearchText(tortenSuche?.value ?? "").trim();
       let cardsHtml = "";
 
@@ -887,13 +1026,14 @@
         return normalizeSearchText(zieltext).includes(suchbegriff);
       });
 
-      gefilterteTorten.forEach((t) => {
+      const karten = await Promise.all(gefilterteTorten.map(async (t) => {
         const safeName = escapeHtml(t.name);
         const safeFuerWen = escapeHtml(t.fuer_wen ?? "");
         const fuerWenText = safeFuerWen || "-";
 
         const safeId = escapeQuotes(String(t.id));
-        const ersteBild = Array.isArray(t.bild) && t.bild.length ? byteaToDataUrl(t.bild[0]) : "";
+        const bildLinks = normalizeArray(t[bilderLinksColumn]);
+        const ersteBild = bildLinks.length ? await resolveBildUrl(bildLinks[0]) : "";
         const coverHtml = ersteBild ? `<img class="cake-cover" src="${ersteBild}" alt="Torte Bild" />` : "";
         const klasse = statusClass(t.status);
         const dueText = t.due_to ? `Bis: ${escapeHtml(formatDueDate(t.due_to))}` : "";
@@ -906,7 +1046,7 @@
           statusIconHtml = '<span class="cake-status-icon cake-status-icon-cancelled" aria-label="Abgebrochen">✕</span>';
         }
 
-        cardsHtml += `
+        return `
           <article class="cake-item ${klasse}" role="button" tabindex="0" onclick="bearbeitenById('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();bearbeitenById('${safeId}');} ">
             ${coverHtml}
             ${dueHtml}
@@ -919,7 +1059,13 @@
             </div>
           </article>
         `;
-      });
+      }));
+
+      cardsHtml = karten.join("");
+
+      if (renderVersion !== renderTortenListeVersion) {
+        return;
+      }
 
       if (!cardsHtml) {
         cardsHtml = '<p class="mb-0 text-muted">Keine Torten gefunden.</p>';
@@ -932,23 +1078,6 @@
       const notizFeld = document.getElementById("notiz");
       notizFeld.style.height = "auto";
       notizFeld.style.height = `${notizFeld.scrollHeight}px`;
-    }
-
-    function bytesToBase64(bytes) {
-      let binary = "";
-      const chunkSize = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, i + chunkSize);
-        binary += String.fromCharCode(...chunk);
-      }
-      return btoa(binary);
-    }
-
-    function byteaToDataUrl(value) {
-      if (!value) return "";
-      const bytes = byteaHexToBytes(value);
-      const mime = detectImageMime(bytes);
-      return `data:${mime};base64,${bytesToBase64(bytes)}`;
     }
 
     function statusClass(status) {
@@ -1229,24 +1358,7 @@
       }
     };
 
-    function detectImageMime(bytes) {
-      if (bytes.length >= 4 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
-      if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-      if (bytes.length >= 4 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return "image/webp";
-      if (bytes.length >= 3 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return "image/gif";
-      return "application/octet-stream";
-    }
-
-    function byteaHexToBytes(value) {
-      const cleaned = String(value).replace(/^\\x/, "");
-      const out = new Uint8Array(cleaned.length / 2);
-      for (let i = 0; i < cleaned.length; i += 2) {
-        out[i / 2] = parseInt(cleaned.slice(i, i + 2), 16);
-      }
-      return out;
-    }
-
-    function renderBildPreview() {
+    async function renderBildPreview() {
       clearPreviewObjectUrls();
       const preview = document.getElementById("bildPreview");
       const bestehendeSichtbar = bestehendeBilder
@@ -1258,12 +1370,10 @@
         return;
       }
 
-      const bestehendeHtml = bestehendeSichtbar.map(({ entry, index }) => {
-        const bytes = byteaHexToBytes(entry);
-        const blob = new Blob([bytes], { type: detectImageMime(bytes) });
-        const url = URL.createObjectURL(blob);
+      const bestehendeHtml = await Promise.all(bestehendeSichtbar.map(async ({ entry, index }) => {
+        const url = await resolveBildUrl(entry);
+        if (!url) return "";
         const safeUrl = escapeQuotes(url);
-        previewObjectUrls.push(url);
         return `
           <div class="bild-preview-item">
             <img src="${url}" alt="Tortenbild" class="preview-clickable" role="button" tabindex="0" onclick="zeigeBildDetail('${safeUrl}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();zeigeBildDetail('${safeUrl}');}" />
@@ -1271,7 +1381,7 @@
             <button type="button" class="bild-remove" onclick="entferneBild('existing', ${index})" aria-label="Bild entfernen">x</button>
           </div>
         `;
-      });
+      }));
 
       const neuHtml = neueBildDateien.map((file, index) => {
           const url = URL.createObjectURL(file);
@@ -1286,7 +1396,7 @@
         `;
         });
 
-      preview.innerHTML = [...bestehendeHtml, ...neuHtml].join("");
+      preview.innerHTML = [...bestehendeHtml.filter(Boolean), ...neuHtml].join("");
       syncEditModeControls();
     }
 
@@ -1318,13 +1428,6 @@
     function setEditMode(enabled) {
       editModeToggle.checked = enabled;
       syncEditModeControls();
-    }
-
-    async function fileToByteaHex(file) {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-      return `\\x${hex}`;
     }
 
     function normalizeArray(value) {
@@ -1503,7 +1606,7 @@
       neueBildDateien = [];
       toggleErdbeerOption(1);
       renderGroessenNachTyp(1);
-      renderBildPreview();
+      void renderBildPreview();
     }
 
     function fillFormFromRow(row) {
@@ -1517,12 +1620,12 @@
 
       fillTierFromRow(1, row);
 
-      bestehendeBilder = normalizeArray(row.bild);
+      bestehendeBilder = normalizeArray(row[bilderLinksColumn]);
       geloeschteBildIndizes = new Set();
       neueBildDateien = [];
       document.getElementById("bildInput").value = "";
       toggleErdbeerOption(1);
-      renderBildPreview();
+      void renderBildPreview();
     }
 
     function openOverlay() {
@@ -1572,6 +1675,12 @@
         return false;
       }
 
+      const sessionResult = await supabase.auth.getSession();
+      if (sessionResult.error || !sessionResult.data?.session) {
+        alert("Keine aktive Anmeldung gefunden. Bitte neu einloggen und erneut speichern.");
+        return false;
+      }
+
       const name = document.getElementById("name").value.trim();
       const fuerWen = document.getElementById("fuerWen").value.trim();
       const price = document.getElementById("price").value.trim();
@@ -1580,9 +1689,7 @@
       const dueTo = document.getElementById("dueTo").value;
       const stockwerkGesamt = getStockwerkAnzahl();
       const stockwerk1 = collectTierData(1);
-      const neueBilderHex = await Promise.all(neueBildDateien.map((file) => fileToByteaHex(file)));
       const verbleibendeBilder = bestehendeBilder.filter((_, index) => !geloeschteBildIndizes.has(index));
-      const bildArray = [...verbleibendeBilder, ...neueBilderHex];
       const statusValue = statusRaw === "" ? null : statusRaw === "true";
 
       const rootPayload = {
@@ -1592,7 +1699,7 @@
         status: statusValue,
         notiz,
         due_to: dueTo || null,
-        bild: bildArray,
+        [bilderLinksColumn]: [],
         boden: stockwerk1.boden,
         fuellung: stockwerk1.fuellung,
         ganache: stockwerk1.ganache,
@@ -1615,7 +1722,7 @@
             status: null,
             notiz: null,
             due_to: null,
-            bild: [],
+            [bilderLinksColumn]: [],
             boden: tier.boden,
             fuellung: tier.fuellung,
             ganache: tier.ganache,
@@ -1632,6 +1739,10 @@
 
       if (aktuelleId) {
         const rootId = aktuelleRootId || aktuelleId;
+        const neueBildLinks = await uploadBildDateien(rootId, neueBildDateien);
+        const bildLinkArray = [...verbleibendeBilder, ...neueBildLinks];
+        rootPayload[bilderLinksColumn] = bildLinkArray;
+
         const updateResult = await supabase
           .from("Torten")
           .update(rootPayload)
@@ -1660,6 +1771,13 @@
             return false;
           }
         }
+
+        const entferntePfade = extractStoragePaths(
+          bestehendeBilder.filter((_, index) => geloeschteBildIndizes.has(index))
+        );
+        if (entferntePfade.length) {
+          await supabase.storage.from(storageBucket).remove(entferntePfade);
+        }
       } else {
         const insertRootResult = await supabase
           .from("Torten")
@@ -1673,6 +1791,17 @@
         }
 
         const rootId = insertRootResult.data?.id;
+        const neueBildLinks = await uploadBildDateien(rootId, neueBildDateien);
+        const updateRootBilderResult = await supabase
+          .from("Torten")
+          .update({ [bilderLinksColumn]: [...verbleibendeBilder, ...neueBildLinks] })
+          .eq("id", rootId);
+
+        if (updateRootBilderResult.error) {
+          alert(updateRootBilderResult.error.message);
+          return false;
+        }
+
         const childRows = buildChildRows(rootId);
         if (childRows.length) {
           const insertChildrenResult = await supabase.from("Torten").insert(childRows);
@@ -1750,6 +1879,12 @@
         return;
       }
 
+      const sessionResult = await supabase.auth.getSession();
+      if (sessionResult.error || !sessionResult.data?.session) {
+        alert("Keine aktive Anmeldung gefunden. Bitte neu einloggen und erneut versuchen.");
+        return;
+      }
+
       const aktion = await frageLoeschAktion();
       if (aktion !== "delete") {
         return;
@@ -1773,6 +1908,12 @@
       if (deleteRootResult.error) {
         alert(deleteRootResult.error.message);
         return;
+      }
+
+      const rootRow = tortenDaten.find((eintrag) => String(eintrag.id) === String(rootId));
+      const bildPfade = extractStoragePaths(normalizeArray(rootRow?.[bilderLinksColumn]));
+      if (bildPfade.length) {
+        await supabase.storage.from(storageBucket).remove(bildPfade);
       }
 
       await formularSchliessen(true);
@@ -1829,7 +1970,7 @@
         neueBildDateien.splice(index, 1);
       }
 
-      renderBildPreview();
+      void renderBildPreview();
     };
 
     window.overlayClick = function (event) {
@@ -1877,7 +2018,7 @@
       const ausgewaehlt = Array.from(event.target.files ?? []);
       if (ausgewaehlt.length) {
         neueBildDateien = [...neueBildDateien, ...ausgewaehlt];
-        renderBildPreview();
+        void renderBildPreview();
       }
       event.target.value = "";
     });
