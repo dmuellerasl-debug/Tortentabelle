@@ -1086,6 +1086,7 @@
     const editModeToggle = document.getElementById("editModeToggle");
     const closeButton = document.getElementById("closeButton");
     const deleteButton = document.getElementById("deleteButton");
+    const bildInput = document.getElementById("bildInput");
     const tortenSuche = document.getElementById("tortenSuche");
     const stockwerkAnzahl = document.getElementById("stockwerkAnzahl");
     const weitereStockwerkeContainer = document.getElementById("weitereStockwerkeContainer");
@@ -1918,7 +1919,7 @@
     function syncEditModeControls() {
       const controls = document.querySelectorAll("#formularOverlay input, #formularOverlay select, #formularOverlay textarea, #formularOverlay button");
       controls.forEach((el) => {
-        if (el === editModeToggle || el === closeButton || el === deleteButton) return;
+        if (el === editModeToggle || el === closeButton || el === deleteButton || el === bildInput) return;
         el.disabled = !isEditMode();
       });
 
@@ -2576,8 +2577,7 @@
     document.getElementById("einnahmenBis").addEventListener("change", renderEinnahmenTabelle);
     document.getElementById("bildInput").addEventListener("change", (event) => {
       if (!isEditMode()) {
-        event.target.value = "";
-        return;
+        setEditMode(true);
       }
 
       const ausgewaehlt = Array.from(event.target.files ?? []);
