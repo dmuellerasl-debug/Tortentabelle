@@ -124,6 +124,30 @@
       border: 1px solid rgba(124, 46, 46, 0.16);
     }
 
+    .sort-toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.45rem;
+    }
+
+    .sort-toggle-btn {
+      border: 1px solid rgba(124, 46, 46, 0.18);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--cake-berry);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.38rem 0.62rem;
+      line-height: 1.2;
+    }
+
+    .sort-toggle-btn.is-active {
+      border-color: rgba(217, 133, 31, 0.85);
+      background: linear-gradient(120deg, #f7a13c, #d9851f);
+      color: #fff;
+    }
+
     .section-enter {
       animation: slideFade 0.6s ease both;
     }
@@ -704,6 +728,10 @@
             <button class="btn-cake btn-cake-soft" onclick="logout()">Logout</button>
             <div class="w-100 mt-1">
               <input id="tortenSuche" class="form-control" placeholder="Suche: Tortenname oder Für wen" />
+              <div class="sort-toggle-row" role="group" aria-label="Sortierung der Tortenliste">
+                <button id="sortNeuesteBtn" type="button" class="sort-toggle-btn is-active" onclick="setTortenSortierung('desc')">Neueste zuerst</button>
+                <button id="sortAeltesteBtn" type="button" class="sort-toggle-btn" onclick="setTortenSortierung('asc')">Älteste zuerst</button>
+              </div>
             </div>
           </div>
         </div>
@@ -988,6 +1016,7 @@
     let confirmCloseResolver = null;
     let confirmDeleteResolver = null;
     let renderTortenListeVersion = 0;
+    let tortenSortierung = "desc";
 
     async function start() {
       const { data } = await supabase.auth.getSession();
@@ -1076,6 +1105,20 @@
       return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
     }
 
+    function sortierZeitstempel(row) {
+      const due = row?.due_to ? new Date(row.due_to) : null;
+      if (due && !Number.isNaN(due.getTime())) {
+        return due.getTime();
+      }
+
+      const created = row?.created_at ? new Date(row.created_at) : null;
+      if (created && !Number.isNaN(created.getTime())) {
+        return created.getTime();
+      }
+
+      return 0;
+    }
+
     function renderEinnahmenTabelle() {
       const tbody = document.getElementById("einnahmenRows");
       const gesamt = document.getElementById("einnahmenGesamt");
@@ -1149,6 +1192,22 @@
       if (event.target === einnahmenOverlay) {
         einnahmenSchliessen();
       }
+    };
+
+    function updateSortierButtons() {
+      const neuesteBtn = document.getElementById("sortNeuesteBtn");
+      const aeltesteBtn = document.getElementById("sortAeltesteBtn");
+      const istNeueste = tortenSortierung === "desc";
+      neuesteBtn.classList.toggle("is-active", istNeueste);
+      aeltesteBtn.classList.toggle("is-active", !istNeueste);
+      neuesteBtn.setAttribute("aria-pressed", istNeueste ? "true" : "false");
+      aeltesteBtn.setAttribute("aria-pressed", istNeueste ? "false" : "true");
+    }
+
+    window.setTortenSortierung = function (richtung) {
+      tortenSortierung = richtung === "asc" ? "asc" : "desc";
+      updateSortierButtons();
+      void renderTortenListe();
     };
 
     async function ladeTorten() {
@@ -1322,6 +1381,12 @@
         if (!suchbegriff) return true;
         const zieltext = `${t.name ?? ""} ${t.fuer_wen ?? ""}`;
         return normalizeSearchText(zieltext).includes(suchbegriff);
+      });
+
+      gefilterteTorten.sort((a, b) => {
+        const aTs = sortierZeitstempel(a);
+        const bTs = sortierZeitstempel(b);
+        return tortenSortierung === "asc" ? aTs - bTs : bTs - aTs;
       });
 
       const karten = await Promise.all(gefilterteTorten.map(async (t) => {
@@ -2384,6 +2449,7 @@
 
     renderWeitereStockwerke();
     syncDeleteButtonVisibility();
+    updateSortierButtons();
   </script>
 </body>
 </html>
