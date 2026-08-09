@@ -272,6 +272,10 @@
       margin: auto 0;
     }
 
+    .overlay-panel-wide {
+      width: min(920px, 100%);
+    }
+
     .overlay-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -515,9 +519,121 @@
       color: rgba(44, 26, 26, 0.82);
     }
 
+    .status-button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .status-choice {
+      border: 1px solid rgba(124, 46, 46, 0.25);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      color: rgba(44, 26, 26, 0.85);
+      font-weight: 700;
+      padding: 0.52rem 0.55rem;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    }
+
+    .status-choice:hover {
+      transform: translateY(-1px);
+    }
+
+    .status-choice.is-active {
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .status-choice-pending.is-active {
+      background: linear-gradient(120deg, #f7a13c, #d9851f);
+    }
+
+    .status-choice-done.is-active {
+      background: linear-gradient(120deg, #2aa766, #198754);
+    }
+
+    .status-choice-cancelled.is-active {
+      background: linear-gradient(120deg, #d15353, #b43f3f);
+    }
+
+    .einnahmen-toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .einnahmen-table-wrap {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid rgba(124, 46, 46, 0.16);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.84);
+      overflow-x: hidden;
+    }
+
+    .einnahmen-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .einnahmen-table th,
+    .einnahmen-table td {
+      padding: 0.6rem 0.7rem;
+      border-bottom: 1px solid rgba(124, 46, 46, 0.12);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    .einnahmen-table th {
+      color: var(--cake-berry);
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+
+    .einnahmen-table th:last-child,
+    .einnahmen-table td:last-child {
+      text-align: right;
+      white-space: nowrap;
+      width: 120px;
+    }
+
+    .einnahmen-torte-name {
+      font-weight: 700;
+      color: var(--cake-berry);
+      line-height: 1.2;
+    }
+
+    .einnahmen-torte-fuer {
+      margin-top: 0.12rem;
+      font-size: 0.84rem;
+      color: rgba(44, 26, 26, 0.72);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .einnahmen-summe {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      border: 1px solid rgba(25, 135, 84, 0.25);
+      border-radius: 12px;
+      background: rgba(25, 135, 84, 0.12);
+      padding: 0.66rem 0.75rem;
+      color: #14603e;
+      font-weight: 800;
+    }
+
     @media (min-width: 768px) {
       .overlay-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .einnahmen-toolbar {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 160px 140px;
+        align-items: end;
       }
     }
 
@@ -583,6 +699,7 @@
           </div>
           <div class="d-flex flex-wrap gap-2">
             <button class="btn-cake btn-cake-primary" onclick="neueTorte()">+ Neue Torte</button>
+            <button class="btn-cake btn-cake-soft" onclick="einnahmenOeffnen()">Einnahmen</button>
             <button class="btn-cake btn-cake-soft" onclick="logout()">Logout</button>
             <div class="w-100 mt-1">
               <input id="tortenSuche" class="form-control" placeholder="Suche: Tortenname oder Für wen" />
@@ -624,16 +741,18 @@
             <input id="dueTo" type="datetime-local" class="form-control" />
           </div>
           <div>
-            <label class="form-label fw-semibold" for="price">💸 Preis</label>
-            <input id="price" class="form-control" placeholder="z. B. 79,00 EUR" />
+            <label class="form-label fw-semibold" for="priceWert">💶 Betrag</label>
+            <input id="priceWert" type="text" inputmode="decimal" class="form-control" placeholder="0,00 €" value="0,00 €" />
+            <input id="price" class="form-control mt-2" placeholder="Notiz" />
           </div>
           <div>
             <label class="form-label fw-semibold" for="statusSelect">🚦 Status</label>
-            <select id="statusSelect" class="form-control">
-              <option value="">In Bearbeitung</option>
-              <option value="true">Fertig</option>
-              <option value="false">Abgebrochen/Storniert</option>
-            </select>
+            <input id="statusSelect" type="hidden" value="" />
+            <div class="status-button-row">
+              <button type="button" id="statusPendingBtn" class="status-choice status-choice-pending" onclick="setStatusAuswahl('')">In Bearbeitung</button>
+              <button type="button" id="statusDoneBtn" class="status-choice status-choice-done" onclick="setStatusAuswahl('true')">Fertig</button>
+              <button type="button" id="statusCancelledBtn" class="status-choice status-choice-cancelled" onclick="setStatusAuswahl('false')">Abgebrochen</button>
+            </div>
           </div>
           <div>
             <label class="form-label fw-semibold" for="notiz">📝 Notiz</label>
@@ -751,6 +870,55 @@
       </div>
     </div>
 
+    <div id="einnahmenOverlay" class="overlay-layer d-none" onclick="einnahmenOverlayClick(event)">
+      <div class="overlay-panel overlay-panel-wide glass-card p-3 p-md-4 section-enter" role="dialog" aria-modal="true" aria-labelledby="einnahmenTitel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h3 id="einnahmenTitel" class="overlay-headline">Einnahmen</h3>
+            <p class="brand-sub mb-0">Wähle einen Zeitraum und sieh sofort, welche Torten darin zusammen wie viel ergeben.</p>
+          </div>
+        </div>
+
+        <div class="d-grid gap-3">
+          <div class="einnahmen-toolbar">
+            <div>
+              <label class="form-label fw-semibold" for="einnahmenVon">Von</label>
+              <input id="einnahmenVon" type="datetime-local" class="form-control" />
+            </div>
+            <div>
+              <label class="form-label fw-semibold" for="einnahmenBis">Bis</label>
+              <input id="einnahmenBis" type="datetime-local" class="form-control" />
+            </div>
+            <button class="btn-cake btn-cake-soft" type="button" onclick="einnahmenAktuellesJahr()">Aktuelles Jahr</button>
+            <button class="btn-cake btn-cake-primary" type="button" onclick="einnahmenBerechnen()">Berechnen</button>
+          </div>
+
+          <div class="einnahmen-table-wrap">
+            <table class="einnahmen-table">
+              <thead>
+                <tr>
+                  <th>Torte</th>
+                  <th>Preis</th>
+                </tr>
+              </thead>
+              <tbody id="einnahmenRows">
+                <tr><td colspan="2">Noch keine Daten geladen.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="einnahmen-summe">
+            <span>Gesamtpreis</span>
+            <span id="einnahmenGesamt">0,00 €</span>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn-cake btn-cake-soft ms-auto" type="button" onclick="einnahmenSchliessen()">Schließen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="bildDetailOverlay" class="image-lightbox d-none" onclick="bildDetailClick(event)">
       <div class="image-lightbox-inner">
         <button type="button" class="image-lightbox-close" onclick="bildDetailSchliessen()" aria-label="Bild schließen">x</button>
@@ -804,6 +972,7 @@
     const loginBox = document.getElementById("loginBox");
     const app = document.getElementById("app");
     const formularOverlay = document.getElementById("formularOverlay");
+    const einnahmenOverlay = document.getElementById("einnahmenOverlay");
     const bildDetailOverlay = document.getElementById("bildDetailOverlay");
     const bildDetailImage = document.getElementById("bildDetailImage");
     const confirmCloseOverlay = document.getElementById("confirmCloseOverlay");
@@ -851,6 +1020,134 @@
     window.logout = async function () {
       await supabase.auth.signOut();
       location.reload();
+    };
+
+    function getWurzelTorten() {
+      return tortenDaten.filter((t) => {
+        const zuTorten = t.zu_tortenID ?? t.zu_tortenid ?? null;
+        const stockwerk = Number(t.stockwerk ?? 1);
+        return zuTorten === null && stockwerk === 1;
+      });
+    }
+
+    function einnahmenZeitraumAktuellesJahr() {
+      const jetzt = new Date();
+      const jahr = jetzt.getFullYear();
+      return {
+        von: new Date(jahr, 0, 1, 0, 0, 0, 0),
+        bis: new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 0, 23, 59, 59, 999)
+      };
+    }
+
+    function einnahmenDefaultZeitraum() {
+      const jetzt = new Date();
+      const jahr = jetzt.getFullYear();
+      return {
+        von: new Date(jahr, 0, 1, 0, 0, 0, 0),
+        bis: new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 0, 23, 59, 59, 999)
+      };
+    }
+
+    function leseEinnahmenZeitraum() {
+      const vonInput = document.getElementById("einnahmenVon")?.value ?? "";
+      const bisInput = document.getElementById("einnahmenBis")?.value ?? "";
+      const standard = einnahmenDefaultZeitraum();
+      const vonDate = new Date(vonInput);
+      const bisDate = new Date(bisInput);
+
+      const von = Number.isNaN(vonDate.getTime()) ? standard.von : vonDate;
+      const bis = Number.isNaN(bisDate.getTime()) ? standard.bis : bisDate;
+
+      if (von <= bis) {
+        return { von, bis };
+      }
+
+      return { von: bis, bis: von };
+    }
+
+    function dueToOderJetzt(row) {
+      const raw = row?.due_to;
+      if (!raw) {
+        return new Date();
+      }
+
+      const parsed = new Date(raw);
+      return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+
+    function renderEinnahmenTabelle() {
+      const tbody = document.getElementById("einnahmenRows");
+      const gesamt = document.getElementById("einnahmenGesamt");
+      const { von, bis } = leseEinnahmenZeitraum();
+
+      const gefiltert = getWurzelTorten().filter((row) => {
+        if (row.status !== true) {
+          return false;
+        }
+        const due = dueToOderJetzt(row);
+        return due >= von && due <= bis;
+      });
+
+      if (!gefiltert.length) {
+        tbody.innerHTML = '<tr><td colspan="2">Keine Torten im gewählten Zeitraum.</td></tr>';
+        gesamt.textContent = formatEuroWert(0);
+        return;
+      }
+
+      tbody.innerHTML = gefiltert
+        .map((row) => {
+          const name = escapeHtml(row.name ?? "Ohne Name");
+          const fuerWen = escapeHtml(row.fuer_wen ?? "-");
+          const preis = Number.isFinite(Number(row.price_wert)) ? Number(row.price_wert) : 0;
+          return `
+            <tr>
+              <td>
+                <div class="einnahmen-torte-name">${name}</div>
+                <div class="einnahmen-torte-fuer">${fuerWen}</div>
+              </td>
+              <td>${formatEuroWert(preis)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const summe = gefiltert.reduce((acc, row) => {
+        const preis = Number.isFinite(Number(row.price_wert)) ? Number(row.price_wert) : 0;
+        return acc + preis;
+      }, 0);
+      gesamt.textContent = formatEuroWert(summe);
+    }
+
+    window.einnahmenAktuellesJahr = function () {
+      const { von, bis } = einnahmenZeitraumAktuellesJahr();
+      document.getElementById("einnahmenVon").value = toDatetimeLocal(von);
+      document.getElementById("einnahmenBis").value = toDatetimeLocal(bis);
+      renderEinnahmenTabelle();
+    };
+
+    window.einnahmenBerechnen = function () {
+      renderEinnahmenTabelle();
+    };
+
+    window.einnahmenOeffnen = async function () {
+      if (!tortenDaten.length) {
+        await ladeTorten();
+      }
+      const standard = einnahmenDefaultZeitraum();
+      document.getElementById("einnahmenVon").value = toDatetimeLocal(standard.von);
+      document.getElementById("einnahmenBis").value = toDatetimeLocal(standard.bis);
+      renderEinnahmenTabelle();
+      einnahmenOverlay.classList.remove("d-none");
+    };
+
+    window.einnahmenSchliessen = function () {
+      einnahmenOverlay.classList.add("d-none");
+    };
+
+    window.einnahmenOverlayClick = function (event) {
+      if (event.target === einnahmenOverlay) {
+        einnahmenSchliessen();
+      }
     };
 
     async function ladeTorten() {
@@ -1092,6 +1389,19 @@
       return "In Bearbeitung";
     }
 
+    window.setStatusAuswahl = function (statusValue) {
+      const feld = document.getElementById("statusSelect");
+      feld.value = statusValue;
+
+      const pendingBtn = document.getElementById("statusPendingBtn");
+      const doneBtn = document.getElementById("statusDoneBtn");
+      const cancelledBtn = document.getElementById("statusCancelledBtn");
+
+      pendingBtn.classList.toggle("is-active", statusValue === "");
+      doneBtn.classList.toggle("is-active", statusValue === "true");
+      cancelledBtn.classList.toggle("is-active", statusValue === "false");
+    };
+
     function clearPreviewObjectUrls() {
       previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
       previewObjectUrls = [];
@@ -1293,6 +1603,7 @@
         name: document.getElementById("name").value,
         fuerWen: document.getElementById("fuerWen").value,
         dueTo: document.getElementById("dueTo").value,
+        priceWert: document.getElementById("priceWert").value,
         price: document.getElementById("price").value,
         statusSelect: document.getElementById("statusSelect").value,
         notiz: document.getElementById("notiz").value,
@@ -1573,6 +1884,28 @@
       return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} - ${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
+    function parseEuroWert(value) {
+      const normalized = String(value ?? "")
+        .replace(/€/g, "")
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".");
+      const parsed = Number.parseFloat(normalized);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return 0;
+      }
+      return parsed;
+    }
+
+    function formatEuroWert(value) {
+      const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
+      return `${safe.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+    }
+
+    function setPriceWertInput(value) {
+      document.getElementById("priceWert").value = formatEuroWert(value);
+    }
+
     function toDatetimeLocal(value) {
       if (!value) return "";
       const date = new Date(value);
@@ -1596,8 +1929,9 @@
       document.getElementById("groesseIndividuell").value = "";
       document.getElementById("fondantFarbeText").value = "";
       document.getElementById("fuerWen").value = "";
+      setPriceWertInput(0);
       document.getElementById("price").value = "";
-      document.getElementById("statusSelect").value = "";
+      setStatusAuswahl("");
       document.getElementById("lactosefrei").checked = false;
       document.getElementById("dueTo").value = "";
       document.getElementById("bildInput").value = "";
@@ -1612,8 +1946,9 @@
     function fillFormFromRow(row) {
       document.getElementById("name").value = row.name ?? "";
       document.getElementById("fuerWen").value = row.fuer_wen ?? "";
+      setPriceWertInput(Number.isFinite(Number(row.price_wert)) ? Number(row.price_wert) : 0);
       document.getElementById("price").value = row.price ?? "";
-      document.getElementById("statusSelect").value = row.status === null ? "" : String(row.status);
+      setStatusAuswahl(row.status === null ? "" : String(row.status));
       document.getElementById("notiz").value = row.notiz ?? "";
       document.getElementById("dueTo").value = toDatetimeLocal(row.due_to);
       document.getElementById("lactosefrei").checked = Boolean(row.lactosefrei);
@@ -1683,6 +2018,7 @@
 
       const name = document.getElementById("name").value.trim();
       const fuerWen = document.getElementById("fuerWen").value.trim();
+      const priceWertRaw = document.getElementById("priceWert").value.trim();
       const price = document.getElementById("price").value.trim();
       const statusRaw = document.getElementById("statusSelect").value;
       const notiz = document.getElementById("notiz").value;
@@ -1691,10 +2027,12 @@
       const stockwerk1 = collectTierData(1);
       const verbleibendeBilder = bestehendeBilder.filter((_, index) => !geloeschteBildIndizes.has(index));
       const statusValue = statusRaw === "" ? null : statusRaw === "true";
+      const priceWert = parseEuroWert(priceWertRaw);
 
       const rootPayload = {
         name,
         fuer_wen: fuerWen || null,
+        price_wert: priceWert,
         price: price || null,
         status: statusValue,
         notiz,
@@ -1718,6 +2056,7 @@
           rows.push({
             name,
             fuer_wen: null,
+            price_wert: 0,
             price: null,
             status: null,
             notiz: null,
@@ -1995,12 +2334,29 @@
         return;
       }
 
+      if (event.key === "Escape" && !einnahmenOverlay.classList.contains("d-none")) {
+        einnahmenSchliessen();
+        return;
+      }
+
       if (event.key === "Escape" && !formularOverlay.classList.contains("d-none")) {
         formularSchliessen();
       }
     });
 
     document.getElementById("notiz").addEventListener("input", autoResizeNotiz);
+    document.getElementById("priceWert").addEventListener("focus", (event) => {
+      const feld = event.target;
+      if (!(feld instanceof HTMLInputElement)) return;
+      const wert = parseEuroWert(feld.value);
+      feld.value = wert.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+    document.getElementById("priceWert").addEventListener("blur", (event) => {
+      const feld = event.target;
+      if (!(feld instanceof HTMLInputElement)) return;
+      const wert = parseEuroWert(feld.value);
+      feld.value = formatEuroWert(wert);
+    });
     editModeToggle.addEventListener("change", syncEditModeControls);
     document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').addEventListener("change", () => toggleErdbeerOption(1));
     document.getElementById("groesseTyp").addEventListener("change", () => renderGroessenNachTyp(1));
@@ -2009,6 +2365,8 @@
       syncEditModeControls();
     });
     tortenSuche.addEventListener("input", renderTortenListe);
+    document.getElementById("einnahmenVon").addEventListener("change", renderEinnahmenTabelle);
+    document.getElementById("einnahmenBis").addEventListener("change", renderEinnahmenTabelle);
     document.getElementById("bildInput").addEventListener("change", (event) => {
       if (!isEditMode()) {
         event.target.value = "";
