@@ -534,6 +534,12 @@
       font-weight: 700;
     }
 
+    .bild-preview-grid.is-readonly .bild-badge,
+    .bild-preview-grid.is-readonly .bild-sort-controls,
+    .bild-preview-grid.is-readonly .bild-remove {
+      display: none;
+    }
+
     .preview-clickable {
       cursor: zoom-in;
     }
@@ -550,7 +556,8 @@
 
     .image-lightbox-inner {
       position: relative;
-      width: min(100%, 1000px);
+      width: fit-content;
+      max-width: min(100%, 1000px);
       max-height: 92vh;
       display: grid;
       place-items: center;
@@ -567,8 +574,9 @@
 
     .image-lightbox-close {
       position: absolute;
-      top: -10px;
-      right: -10px;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
       width: 34px;
       height: 34px;
       border: 0;
@@ -1848,11 +1856,13 @@
 
       if (!bildReihenfolge.length) {
         preview.classList.remove("is-multi");
+        preview.classList.toggle("is-readonly", !isEditMode());
         preview.innerHTML = "";
         return;
       }
 
       preview.classList.toggle("is-multi", bildReihenfolge.length > 1);
+      preview.classList.toggle("is-readonly", !isEditMode());
 
       const gesamt = bildReihenfolge.length;
       const bilderHtml = await Promise.all(bildReihenfolge.map(async (eintrag, index) => {
@@ -1939,6 +1949,11 @@
         if (el === editModeToggle || el === closeButton || el === deleteButton || el === bildInput) return;
         el.disabled = !isEditMode();
       });
+
+      const preview = document.getElementById("bildPreview");
+      if (preview) {
+        preview.classList.toggle("is-readonly", !isEditMode());
+      }
 
       toggleErdbeerOption(1);
       renderGroessenNachTyp(1, document.getElementById("groesseStandard").value);
@@ -2582,7 +2597,9 @@
       const wert = parseEuroWert(feld.value);
       feld.value = formatEuroWert(wert);
     });
-    editModeToggle.addEventListener("change", syncEditModeControls);
+    editModeToggle.addEventListener("change", () => {
+      syncEditModeControls();
+    });
     document.querySelector('input[name="fuellung"][value="Erdbeersahne"]').addEventListener("change", () => toggleErdbeerOption(1));
     document.getElementById("groesseTyp").addEventListener("change", () => renderGroessenNachTyp(1));
     stockwerkAnzahl.addEventListener("change", () => {
